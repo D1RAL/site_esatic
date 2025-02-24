@@ -103,6 +103,36 @@
       font-size: 28px;
       cursor: pointer;
     }
+    .btn-primary{
+      background-color: #0563bb;
+      border-radius: 50px;
+      border: none;
+      transition: transform 0.3s ease;
+    }
+    .btn-success{
+      background-color: #0563bb;
+      border-radius: 50px;
+      border: none;
+      transition: transform 0.3s ease;
+      margin-left: 20px;
+      
+
+    }
+    .btn-primary:hover{
+      transform: scale(1.1);
+      background-color: #0563bb;
+
+
+    }
+    .btn-success:hover{
+      transform: scale(1.1);
+      background-color: #0563bb;
+      
+
+    }
+    #resume {
+      margin-top : 50px;
+    }
   </style>
 
 </head>
@@ -121,8 +151,8 @@
       <ul>
         <li><a href="#hero" class="active"><i class="bi bi-house-door navicon"></i><span>Tableau de bord</span></a></li>
         <li><a href="#about"><i class="bi bi-book navicon"></i><span>Mes documents</span></a></li>
+        <li><a href="#resume"><i class="bi bi-book navicon"></i><span>Mes notes</span></a></li>
         <li><a href="#appointment"><i class="bi bi-pencil-square navicon"></i><span>Résultats</span></a></li>
-        <li><a href="#appointment"><i class="bi bi-pencil-square navicon"></i><span>Mon Profil</span></a></li>
         <li><a href="#"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
       </ul>
     </nav>
@@ -245,8 +275,8 @@
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>Mes classes</h2>
-        <p>Gérez facilement vos cours en ajoutant, modifiant ou supprimant des cours dans le programme.</p>
+        <h2>MES DOCUMENTS</h2>
+        <p>Récupère ici tous tes documents selon la matière.</p>
       </div>
     
       <div class="container" data-aos="fade-up" data-aos-delay="100">
@@ -322,6 +352,136 @@
       </div>
     
     </section>
+
+    <section id="resume" class="courses section">
+
+      <!-- Section Title -->
+      <div class="container section-title" data-aos="fade-up">
+        <h2>Gestion des notes</h2>
+        <p>Renseignez vos notes et calculer votre moyenne</p>
+      </div><!-- End Section Title -->
+    
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+    
+        <div class="row gy-4 justify-content-center">
+          
+          <div class="col-lg-15 content">
+            <h2>Gestion des notes</h2>
+
+            <div class="mb-3">
+              <label for="subjectSelect" class="form-label">Sélectionner une matière</label>
+              <select id="subjectSelect" class="form-control">
+                <option value="Mathématiques">Algo</option>
+                <option value="Physique">Physique</option>
+                <option value="Chimie">Python</option>
+                <option value="Informatique">Geo-diff</option>
+              </select>
+          </div>
+
+          
+            
+            <table style="width: 100%" id="notesTable" class="table table-bordered">
+              <thead>
+                <tr>
+                    <th style="width: 10%">Nom</th>
+                    <th style="width: 10%">Note </th>
+                    
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td rowspan="1000">Dagou</td>
+                  <td><input type="number" class="form-control note"></td>
+                </tr>
+              </tbody>
+            </table>
+            <button class="btn btn-primary add-row-btn">Ajouter une note</button>
+            <button class="btn btn-success calculate-btn">Calculer la Moyenne</button>
+            <h3 class="mt-4">Moyenne générale: <span id="average">-</span></h3>
+          </div>
+          <table id="subjectAverageTable" class="subject-average-table">
+            <thead>
+              <tr>
+                <th>Matière</th>
+                <th>Moyenne</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        
+          <script>
+       
+            function resetNotesTable() {
+              const tbody = document.querySelector('#notesTable tbody');
+              tbody.innerHTML = '';  
+          
+           
+              const firstRow = `
+                <tr>
+                     <td rowspan="1000">Dagou</td>
+                        <td><input type="number" class="form-control note"></td>
+                </tr>
+              `;
+              tbody.insertAdjacentHTML('beforeend', firstRow);
+          
+        
+              document.getElementById('average').textContent = '-';
+            }
+          
+       
+            document.querySelector('.add-row-btn').addEventListener('click', function() {
+              const tbody = document.querySelector('#notesTable tbody');
+              const newRow = `
+                <tr>
+                  <td><input type="number" class="form-control note"></td>
+                </tr>
+              `;
+              tbody.insertAdjacentHTML('beforeend', newRow);
+            });
+          
+      
+            document.querySelector('.calculate-btn').addEventListener('click', function() {
+              const notes = document.querySelectorAll('#notesTable .note');
+              let total = 0;
+              let count = 0;
+          
+              notes.forEach(note => {
+                const value = parseFloat(note.value);
+                if (!isNaN(value)) {
+                  total += value;
+                  count++;
+                }
+              });
+          
+              const average = count > 0 ? (total / count).toFixed(2) : '-';
+              document.getElementById('average').textContent = average;
+          
+         
+              const subject = document.getElementById('subjectSelect').value;
+              const subjectTable = document.getElementById('subjectAverageTable').querySelector('tbody');
+              const newRow = `
+                <tr>
+                  <td>${subject}</td>
+                  <td>${average}</td>
+                </tr>
+              `;
+              subjectTable.insertAdjacentHTML('beforeend', newRow);
+            });
+          
+            
+            document.getElementById('subjectSelect').addEventListener('change', function() {
+              resetNotesTable();  
+            });
+          </script>
+          
+        
+        </div>
+    
+      </div>
+    
+    </section>
+
+    
     
     <!-- Fenêtre Modale -->
     <div id="uploadModal" class="modal">
@@ -344,46 +504,11 @@
     <section id="appointment" class="appointment section light-background">
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>PROGRAMMATION DE RATTRAPAGE</h2>
-        <p>La fonctionnalité de prise de rendez-vous en ligne de Medicor vous permet de planifier vos consultations</p>
+        <h2>RESULTATS SEMESTRIELS</h2>
+        <p><strong>Vos résultats du semestre ne sont pas disponibles actuellement...</strong></p>
       </div><!-- End Section Title -->
-  
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
-        <form method='POST' id="appointment-form" role="form">
-          <div class="row">
-            <div class="col-md-4 form-group mt-3">
-              <select name="department" id="department" class="form-select" required="">
-                <option value="">Sélectionnez la classe</option>
-                <option value="SRIT2A">SRIT2A</option>
-                <option value="SRIT2B">SRIT2B</option>
-              </select>
-            </div>
-            <div class="col-md-4 form-group mt-3">
-                <select name="doctor" id="doctor" class="form-select" required="">
-                    <option value="">Sélectionnez le jour</option>
-                    <option value="Dr. NOMEL">buyb</option>
-                    <option value="Dr.ABIALY">b67u7</option>
-                    <option value="Dr. ECHICOUA">b78j7</option>
-                </select>
-            </div>
-            <div class="col-md-4 form-group mt-3">
-              <select name="doctor" id="doctor" class="form-select" required="">
-                  <option value="">Sélectionnez l'heure</option>
-                  <option value="Dr. NOMEL">07h45-10h00</option>
-                  <option value="Dr.ABIALY">10h15-12h45</option>
-              </select>
-          </div>
-          </div>
+</section>
 
-          <div class="mt-3">
-            <div class="text-center">
-                <button type="submit" class="btn btn-success">VALIDER</button>
-            </div>
-          </div>
-        </form>
-      </div>
-
-    </section>
 
   </main>
 
