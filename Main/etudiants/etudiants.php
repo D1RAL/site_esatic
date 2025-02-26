@@ -1,9 +1,17 @@
+<?php
+require '../dbconnection.php'; // Inclure le fichier de connexion
 
+// ID de l'étudiant à afficher (exemple: 1)
+$id_etudiant = 1;
 
-
+// Requête SQL pour récupérer le nom de l'étudiant
+$stmt = $pdo->prepare("SELECT nom_etudiant FROM etudiants WHERE id = ?");
+$stmt->execute([$id_etudiant]);
+$etudiant = $stmt->fetch(PDO::FETCH_ASSOC);
+?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
   <meta charset="utf-8">
@@ -53,7 +61,7 @@
         margin: auto;
     }
     /* Section d'image en haut */
-  .top-image-container {
+    .top-image-container {
     width: 100%;
     height: 100vh; /* Utilise toute la hauteur de la fenêtre */
     position: relative;
@@ -62,21 +70,21 @@
     align-items: center;
     overflow: hidden;
     z-index: 10;
-  }
+    }
 
-  /* Image */
-  .top-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* L'image va remplir l'espace sans déformer */
-  }
+    /* Image */
+    .top-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* L'image va remplir l'espace sans déformer */
+    }
 
-  /* Contenu sous l'image */
-  .content {
-    position: relative;
-    z-index: 1;
-    padding: 20px;
-  }
+    /* Contenu sous l'image */
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 20px;
+    }
 
   </style>
 
@@ -167,7 +175,9 @@
     <div class="content" id="hero">
       <div class="container mt-4">
         <header class="mb-4">
-        <h1 class="text-center">Bienvenue, Professeur Goli</h1>
+        <h1 class="text-center">
+        Bienvenue, <?php echo $etudiant ? htmlspecialchars($etudiant['nom_etudiant']) : "Professeur Goli"; ?>
+    </h1>
         </header>
     
         <!-- Widgets -->
@@ -482,8 +492,7 @@
         </div>
     
       </div>
-    
-    </section>
+    </section>
 
     
     
@@ -511,7 +520,7 @@
         <h2>RESULTATS SEMESTRIELS</h2>
         <p><strong>Vos résultats du semestre ne sont pas disponibles actuellement...</strong></p>
       </div><!-- End Section Title -->
-</section>
+    </section>
 
 
   </main>
