@@ -3,53 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau Dynamique des Étudiants</title>
+    <title>Tableau Dynamique</title>
     <link rel="stylesheet" href="liste.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
 </head>
 <body>
-
     <div class="container">
-        <h1>Liste des étudiants</h1>
+        <h1 id="titre">Liste des Étudiants</h1>
+
+        <!-- Sélection du type d'affichage -->
+        <div>
+            <label for="typeSelection">Afficher :</label>
+            <select id="typeSelection">
+                <option value="etudiants">Étudiants</option>
+                <option value="professeurs">Professeurs</option>
+            </select>
+        </div>
 
         <!-- Barre de recherche -->
         <div class="seacher">
-            <form action="">
-                <input type="text" name="" placeholder="Recherche...">
+            <form>
+                <input type="text" id="search" placeholder="Recherche..." onkeyup="filtrerListe()">
                 <i class="fa-solid fa-search"></i>
             </form>
         </div>
+
         <!-- Tableau dynamique -->
         <table>
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Prénom</th>
-                    <th>Matricule</th>
-                    <th>Classe</th>
-                    <th>Date de Naissance</th>
-                </tr>
+            <thead id="tableHead">
+                <!-- En-têtes du tableau dynamiques -->
             </thead>
-            <tbody id="tableBody">  
-                <!-- Les étudiants seront ajoutés ici -->
-                <td>etudiant.nom</td>
-                <td>etudiant.prenom</td>
-                <td>etudiant.matricule</td>
-                <td>etudiant.classe</td>
-                <td>etudiant.dateNaissance</td>
-            </tbody>
             <tbody id="tableBody">
-                <!-- Les étudiants seront ajoutés ici -->
-                <td>etudiant.nom</td>
-                <td>etudiant.prenom</td>
-                <td>etudiant.matricule</td>
-                <td>etudiant.classe</td>
-                <td>etudiant.dateNaissance</td>
+                <!-- Contenu dynamique -->
             </tbody>
         </table>
     </div>
 
-    <script src="JStext.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

@@ -110,3 +110,46 @@ document.addEventListener("DOMContentLoaded", function () {
         registerFields.innerHTML = additionalFields;
     }
 });
+
+document.addEventListener("DOMContentLoaded", function() {
+    const selectElement = document.getElementById("typeSelection");
+    const tableHead = document.getElementById("tableHead");
+    const tableBody = document.getElementById("tableBody");
+    const titre = document.getElementById("titre");
+
+    selectElement.addEventListener("change", afficherListe);
+
+    function afficherListe() {
+        const type = selectElement.value;
+        tableBody.innerHTML = ""; // Réinitialisation du tableau
+        titre.textContent = type === "etudiants" ? "Liste des Étudiants" : "Liste des Professeurs";
+
+        // Définition des colonnes en fonction du type
+        if (type === "etudiants") {
+            tableHead.innerHTML = `
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Matricule</th>
+                    <th>Classe</th>
+                    <th>Date de Naissance</th>
+                </tr>`;
+        } else {
+            tableHead.innerHTML = `
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Matricule</th>
+                    <th>Spécialité</th>
+                </tr>`;
+        }
+    }
+
+    function filtrerListe() {
+        const recherche = document.getElementById("search").value.toLowerCase();
+        document.querySelectorAll("#tableBody tr").forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(recherche) ? "" : "none";
+        });
+    }
+});
+

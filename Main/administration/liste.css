@@ -13,31 +13,6 @@ body {
     border-radius: 10px;
 }
 
-.form-container {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-input, button {
-    padding: 8px;
-    font-size: 16px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-}
-
-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
 table {
     width: 100%;
     border-collapse: collapse;
@@ -54,20 +29,6 @@ th {
     background-color: #007bff;
     color: white;
 }
-input{
-    width: 45%;
-    height: 100%;
-    display: block;
-    border-radius: 25px;
-    font-size: 20px;
-    padding: 8px 40px 8px 20px;
-    border: none;
-    box-shadow: 0 1px 1px 1px  #007bff;
-}
-
-input:focus{
-    outline: none;
-}
 
 .seacher {
     display: flex;
@@ -75,27 +36,23 @@ input:focus{
     align-items: center;
     position: relative;
     width: 50%;
-    /* margin:px; */
 }
 
 .seacher input {
-    width: 100%;
-    height: 40px;
+    width: 50%;
+    height: 25px;
     border-radius: 25px;
     font-size: 16px;
-    padding: 8px 40px 8px 20px; /* Ajoute de l'espace à droite pour l'icône */
+    padding: 8px 40px 8px 20px;
     border: 1px solid #ccc;
     box-shadow: 0 1px 1px 1px #007bff;
     outline: none;
 }
 
-form {
-    display: flex;
-    gap: 10px;
-}
-
 form i {
-    align-self: center;
+    margin-top: 10px;
+    position: absolute;
+    float: right;
     font-size: 25px;
     color: #0056b3;
     cursor: pointer;
