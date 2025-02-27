@@ -1,112 +1,137 @@
-document.addEventListener("DOMContentLoaded", function () {
-    let isLogin = true; // Mode connexion par défaut
-    let userRole = ""; // Rôle sélectionné
+// État global
+let isLogin = true;
+let isLoading = false;
 
-    // Sélection des éléments HTML
-    const roleSelection = document.getElementById("roleSelection");
-    const roleSelect = document.getElementById("roleSelect");
-    const confirmRoleBtn = document.getElementById("confirmRoleBtn");
-    const formContainer = document.getElementById("formContainer");
-    const formTitle = document.getElementById("formTitle");
-    const registerFields = document.getElementById("registerFields");
-    const confirmPasswordField = document.getElementById("confirmPasswordField");
-    const submitBtnText = document.getElementById("submitBtnText");
-    const toggleModeBtn = document.getElementById("toggleMode");
-    const authForm = document.getElementById("authForm");
+// Éléments DOM
+const form = document.getElementById('authForm');
+const registerFields = document.getElementById('registerFields');
+const confirmPasswordField = document.getElementById('confirmPasswordField');
+const rememberMeGroup = document.getElementById('rememberMeGroup');
+const toggleModeBtn = document.getElementById('toggleMode');
+const formTitle = document.getElementById('formTitle');
+const submitBtnText = document.getElementById('submitBtnText');
+const successModal = document.getElementById('successModal');
+const successMessage = document.getElementById('successMessage');
 
-    // Validation du choix du rôle et affichage du formulaire
-    confirmRoleBtn.addEventListener("click", function () {
-        userRole = roleSelect.value;
-        if (userRole) {
-            roleSelection.style.display = "none"; // Masquer la sélection du rôle
-            formContainer.style.display = "block"; // Afficher le formulaire
-            updateForm(); // Mettre à jour le formulaire en fonction du rôle
+// Gestion des mots de passe
+document.querySelectorAll('.password-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const input = this.previousElementSibling;
+        const icon = this.querySelector('svg');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        } else {
+            input.type = 'password';
+            icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
         }
     });
+});
 
-    // Gestion du basculement entre Connexion et Inscription
-
-    toggleModeBtn.addEventListener("click", function () {
-        isLogin = !isLogin;
-        updateForm();
-    })
-    document.getElementById("confirmRoleBtn").addEventListener("click", function() {
-        let roleSelection = document.getElementById("roleSelect").value;
-        let roleContainer = document.getElementById("roleSelection");
-        let formContainer = document.getElementById("formContainer");
-        let registerFields = document.getElementById("registerFields");
-        let confirmPasswordField = document.getElementById("confirmPasswordField");
-        let submitBtnText = document.getElementById("submitBtnText");
+// Changement de mode (connexion/inscription)
+toggleModeBtn.addEventListener('click', function() {
+    isLogin = !isLogin;
+    registerFields.style.display = isLogin ? 'none' : 'block';
+    confirmPasswordField.style.display = isLogin ? 'none' : 'block';
+    rememberMeGroup.style.display = isLogin ? 'block' : 'none';
+    formTitle.textContent = isLogin ? 'Connexion Professeur' : 'Inscription Professeur';
+    submitBtnText.textContent = isLogin ? 'Se connecter' : "S'inscrire";
+    this.textContent = isLogin ? 'Créer un compte' : 'Déjà inscrit ? Se connecter';
     
-        if (roleSelection) {
-            roleContainer.style.display = "none"; // Masquer le choix du rôle
-            formContainer.style.display = "block"; // Afficher le formulaire
-            registerFields.style.display = "block"; // Afficher les champs Nom & Prénom
-            confirmPasswordField.style.display = "block"; // Afficher le champ de confirmation du mot de passe
-            submitBtnText.textContent = "Créer un compte"; // Modifier le texte du bouton
+    // Reset form
+    form.reset();
+    clearErrors();
+});
+
+// Validation du formulaire
+function validateForm() {
+    let isValid = true;
+    clearErrors();
+
+    if (!isLogin) {
+        const requiredFields = ['nom', 'prenom', 'dateNaissance', 'email'];
+        requiredFields.forEach(field => {
+            const input = form.elements[field];
+            if (!input.value) {
+                showError(input, `Le ${field} est requis`);
+                isValid = false;
+            }
+        });
+
+        const password = form.elements.password.value;
+        const confirmPassword = form.elements.confirmPassword.value;
+        if (password !== confirmPassword) {
+            showError(form.elements.confirmPassword, 'Les mots de passe ne correspondent pas');
+            isValid = false;
         }
+    }
+
+    if (!form.elements.matricule.value) {
+        showError(form.elements.matricule, 'Le matricule est requis');
+        isValid = false;
+    }
+    if (!form.elements.password.value) {
+        showError(form.elements.password, 'Le mot de passe est requis');
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+// Affichage des erreurs
+function showError(input, message) {
+    const group = input.closest('.input-group');
+    const error = document.createElement('p');
+    error.className = 'error-message';
+    error.innerHTML = `
+        <svg class="lucide-alert-circle" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" style="margin-right: 0.25rem;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        ${message}
+    `;
+    group.appendChild(error);
+    input.style.borderColor = '#ef4444';
+    input.style.backgroundColor = '#fef2f2';
+}
+
+// Nettoyage des erreurs
+function clearErrors() {
+    document.querySelectorAll('.error-message').forEach(error => error.remove());
+    document.querySelectorAll('.input-field').forEach(input => {
+        input.style.borderColor = '#e5e7eb';
+        input.style.backgroundColor = 'white';
     });
-    ;
+}
 
-    // Fonction de mise à jour du formulaire en fonction du rôle et du mode
-    function updateForm() {
-        const roleText = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+// Soumission du formulaire
+form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (!validateForm() || isLoading) return;
 
-        formTitle.textContent = `Inscription ${roleText}`;
-        submitBtnText.textContent = isLogin ? "Se connecter" : "S'inscrire";
-        toggleModeBtn.textContent = isLogin ? "Créer un compte" : "Déjà inscrit ? Se connecter";
+    isLoading = true;
+    const submitBtn = form.querySelector('.submit-btn');
+    submitBtnText.innerHTML = '<div class="loading-spinner"></div>';
+    submitBtn.disabled = true;
 
-        // Afficher/Masquer les champs d'inscription
-        registerFields.style.display = isLogin ? "none" : "block";
-        confirmPasswordField.style.display = isLogin ? "none" : "block";
+    // Simulation de l'envoi
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // Modifier l'action du formulaire (connexion.php ou inscription.php)
-        authForm.action = isLogin ? "connexion.php" : "connexion.php";
+    // Affichage du succès
+    successMessage.textContent = isLogin ? 'Connexion réussie!' : 'Inscription réussie!';
+    successModal.classList.add('active');
 
-        // Modifier dynamiquement les champs en fonction du rôle
-        updateFieldsByRole(userRole, isLogin);
-    }
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Fonction pour modifier les champs en fonction du rôle
-    function updateFieldsByRole(role, isLogin) {
-        registerFields.innerHTML = ""; // Réinitialiser les champs
-        let additionalFields = "";
+    successModal.classList.remove('active');
+    submitBtnText.textContent = isLogin ? 'Se connecter' : "S'inscrire";
+    submitBtn.disabled = false;
+    isLoading = false;
+    form.reset();
+});
 
-        if (!isLogin) {
-            additionalFields += `
-                <div class="input-group">
-                    <input type="text" name="nom" class="input-field" placeholder="Nom">
-                </div>
-                <div class="input-group">
-                    <input type="text" name="prenom" class="input-field" placeholder="Prénom">
-                </div>
-            `;
-        }
-
-        if (role === "etudiant") {
-            additionalFields += `
-                <div class="input-group">
-                    <input type="text" name="filiere" class="input-field" placeholder="Filière">
-                </div>
-                <div class="input-group">
-                    <input type="text" name="niveau" class="input-field" placeholder="Niveau">
-                </div>
-            `;
-        } else if (role === "professeur") {
-            additionalFields += `
-                <div class="input-group">
-                    <input type="text" name="specialite" class="input-field" placeholder="Spécialité">
-                </div>
-            `;
-        } else if (role === "administration") {
-            additionalFields += `
-                <div class="input-group">
-                    <input type="text" name="fonction" class="input-field" placeholder="Fonction">
-                </div>
-            `;
-        }
-
-        // Injecter les nouveaux champs
-        registerFields.innerHTML = additionalFields;
-    }
+// Animation des champs au chargement
+document.querySelectorAll('.input-group').forEach((group, index) => {
+    group.style.animationDelay = `${index * 0.1}s`;
 });

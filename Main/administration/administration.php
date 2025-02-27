@@ -1,14 +1,29 @@
 <?php
-require '../dbconnection.php'; // Inclure le fichier de connexion
+session_start();
+include('../dbconnection.php'); // Connexion à la base de données
 
-// ID de l'étudiant à afficher (exemple: 1)
-$id_administration = 1;
+if (isset($_SESSION['admin_email'])) {
+    $email = $_SESSION['admin_email'];
 
-// Requête SQL pour récupérer le nom de l'étudiant
-$stmt = $pdo->prepare("SELECT nom_admin FROM administration WHERE id = ?");
-$stmt->execute([$id_administration]);
-$etudiant = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Vérification si la session existe
+    $sql = "SELECT nom_admin FROM administration WHERE admin_email = :email";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':email', $email);
+    $stmt->execute();
+    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($admin && !empty($admin['nom_admin'])) {
+        $nom_admin = htmlspecialchars($admin['nom_admin']); // Sécurisation
+    } else {
+        $nom_admin = "Admin"; // Si aucun nom n'est trouvé
+    }
+} else {
+    echo "<script>alert('Veuillez vous connecter d'abord'); window.location.href='../login.php';</script>";
+    exit();
+}
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -175,7 +190,9 @@ $etudiant = $stmt->fetch(PDO::FETCH_ASSOC);
     <div class="content" id="hero">
       <div class="container mt-4">
         <header class="mb-4">
-            <h1 class="text-center">Bienvenue, Professeur <?php echo htmlspecialchars($etudiant['nom_admin']); ?></h1>
+        <h1 class="text-center">Bienvenue, <?php echo htmlspecialchars($nom_admin ?? "Admin"); ?></h1>
+
+
         </header>
     
         <!-- Widgets -->
