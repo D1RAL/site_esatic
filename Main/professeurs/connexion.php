@@ -3,7 +3,7 @@ session_start();
 
 // Connexion à la base de données PostgreSQL
 $host = "localhost";
-$dbname = "site_esatic";
+$dbname = "origin_esatic";
 $user = "samuel";
 $password = "cedric225";
 
@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION["user_id"] = $user["id"];
             $_SESSION["matricule"] = $matricule;
             $_SESSION["user_type"] = $user_table;
-            header("Location: note.html"); // Redirige vers la page d'accueil
+            header("Location: professeurs.php"); // Redirige vers la page d'accueil
             exit;
         } else {
             $error = "Matricule ou mot de passe incorrect.";

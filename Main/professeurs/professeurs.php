@@ -1,5 +1,53 @@
+<?php
+session_start();
+
+// Vérifiez si l'utilisateur est connecté
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'professeurs') {
+    // Si l'utilisateur n'est pas connecté, rediriger vers la page de connexion
+    header("Location: login.php");
+    exit;
+}
+
+// Connexion à la base de données PostgreSQL
+$host = "localhost";
+$dbname = "site_esatic";
+$user = "samuel";
+$password = "cedric225";
+
+try {
+    $pdo = new PDO("pgsql:host=$host;dbname=$dbname", $user, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
+} catch (PDOException $e) {
+    die("Erreur de connexion à la base de données : " . $e->getMessage());
+}
+
+// Récupérer les informations du professeur connecté
+$user_id = $_SESSION['user_id']; // ID du professeur depuis la session
+
+// Requête pour récupérer les informations du professeur
+$stmt = $pdo->prepare("SELECT * FROM professeurs WHERE id = :id");
+$stmt->bindParam(":id", $user_id, PDO::PARAM_INT);
+$stmt->execute();
+
+$professeur = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Vérifiez si le professeur a été trouvé
+if ($professeur) {
+    $nom = $professeur['nom_professeur'];
+    $prenom = $professeur['prenom_professeur'];
+    $email = $professeur['email']; 
+    $specialite = $professeur['specialite'];
+    // Vous pouvez ajouter d'autres champs si nécessaire
+} else {
+    // Si le professeur n'est pas trouvé, vous pouvez afficher un message ou rediriger
+    echo "Professeur non trouvé.";
+    exit;
+}
+?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
   <meta charset="utf-8">
@@ -132,7 +180,7 @@
     <div class="content" id="hero">
       <div class="container mt-4">
         <header class="mb-4">
-            <h1 class="text-center">Bienvenue, Professeur Goli</h1>
+            <h1 class="text-center">Bienvenue, Professeur <?php echo htmlspecialchars($prenom . ' ' . $nom); ?></h1>
         </header>
     
         <!-- Widgets -->
@@ -190,7 +238,7 @@
         <div class="mt-4">
             <h3>Calendrier des cours à venir</h3>
             <ul class="list-group">
-                <li class="list-group-item">🕘 Lundi 10h - Algèbre Linéaire</li>
+                <li class="list-group-item">🕘 Lundi 10h - <?php echo htmlspecialchars($specialite); ?></li>
                 <li class="list-group-item">🕒 Mercredi 14h - Réseaux Informatiques</li>
                 <li class="list-group-item">🕖 Vendredi 8h - Programmation Java</li>
             </ul>
