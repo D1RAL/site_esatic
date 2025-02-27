@@ -18,7 +18,7 @@ if (isset($_SESSION['admin_email'])) {
         $nom_admin = "Admin"; // Si aucun nom n'est trouvé
     }
 } else {
-    echo "<script>alert('Veuillez vous connecter d'abord'); window.location.href='../login.php';</script>";
+    echo "<script>alert('Veuillez vous connecter d'abord'); window.location.href='../connexion.php';</script>";
     exit();
 }
 ?>
