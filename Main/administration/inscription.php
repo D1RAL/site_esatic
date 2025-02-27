@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -66,6 +67,66 @@
             transform: scale(0.98);
         }        
     </style>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .checkbox-container {
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        .checkbox-container h3 {
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group input {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .checkbox-group input:checked {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .checkbox-group input:checked::after {
+            content: '✔';
+            color: white;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .checkbox-group label {
+            cursor: pointer;
+            color: #333;
+        }
+    </style>
+    
 </head>
 <body>
     <div class="container">
@@ -86,7 +147,7 @@
                 <p class="subtitle">ESATIC - École Supérieure Africaine des TIC</p>
             </div>
 
-            <form id="authForm" method="POST" action="connexion.php">
+            <form id="authForm" method="POST" action="traitement_inscription.php">
                 <div id="registerFields" style="display: none;">
                     <div class="input-group">
                         <svg class="lucide-user" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -110,7 +171,7 @@
                 </div>
                 <div id="confirmPasswordField" class="input-group" style="display: none;">
                     <svg class="lucide-lock" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    <input type="password" name="confirmPassword" class="input-field" placeholder="Confirmer le mot de passe">
+                    <input type="password" name="confirm_password" class="input-field" placeholder="Confirmer le mot de passe">
                     <button type="button" class="password-toggle">
                         <svg class="lucide-eye" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
@@ -125,10 +186,6 @@
                     <span id="submitBtnText">Se connecter</span>
                 </button>
             </form>
-
-            <div class="toggle-mode">
-                <button type="button" id="toggleMode">Créer un compte</button>
-            </div>
         </div>
         
         
