@@ -1,15 +1,27 @@
 <?php
-require '../dbconnection.php'; // Inclure le fichier de connexion
+session_start();
+include('../dbconnection.php'); // Connexion à la base de données
 
-// ID de l'étudiant à afficher (exemple: 1)
-$id_etudiant = 1;
+if (isset($_SESSION['email_etudiant'])) {
+    $email = $_SESSION['email_etudiant']; // Récupération de l'email de l'étudiant
 
-// Requête SQL pour récupérer le nom de l'étudiant
-$stmt = $pdo->prepare("SELECT nom_etudiant FROM etudiants WHERE id = ?");
-$stmt->execute([$id_etudiant]);
-$etudiant = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Vérification si la session existe
+    $sql = "SELECT nom_etudiant FROM etudiants WHERE email_etudiant = :email";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':email', $email);
+    $stmt->execute();
+    $etudiant = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($etudiant && !empty($etudiant['nom_etudiant'])) {
+        $nom_etudiant = htmlspecialchars($etudiant['nom_etudiant']); // Sécurisation
+    } else {
+        $nom_etudiant = "Admin"; // Si aucun nom n'est trouvé
+    }
+} else {
+    echo "<script>alert('Veuillez vous connecter d'abord'); window.location.href='../connexion.php';</script>";
+    exit();
+}
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 
