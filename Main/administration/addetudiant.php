@@ -9,16 +9,15 @@ $conn = new PDO("pgsql:host=$host;dbname=$dbname", $user, $password);
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $matricule = isset($_POST['matricule']) ? htmlspecialchars($_POST['matricule']) : null;
-    $nom = isset($_POST['nom']) ? htmlspecialchars($_POST['nom']) : null;
-    $prenom = isset($_POST['prenom']) ? htmlspecialchars($_POST['prenom']) : null;
-    $email = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : null;
-    $password = isset($_POST['password']) ? $_POST['password'] : null;
-    $confirm_password = isset($_POST['confirm_password']) ? $_POST['confirm_password'] : null;
-    $matiere_id = isset($_POST['matiere']) ? htmlspecialchars($_POST['matiere']) : null;
-    $classe_id = isset($_POST['classe']) ? htmlspecialchars($_POST['classe']) : null;
+    $matricule = htmlspecialchars($_POST['matricule'] ?? '');
+    $nom = htmlspecialchars($_POST['nom'] ?? '');
+    $prenom = htmlspecialchars($_POST['prenom'] ?? '');
+    $email = htmlspecialchars($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
+    $classe_id = htmlspecialchars($_POST['classe'] ?? '');
 
-    if (empty($matricule) || empty($nom) || empty($prenom) || empty($email) || empty($password) || empty($confirm_password) || empty($matiere_id) || empty($classe_id)) {
+    if (empty($matricule) || empty($nom) || empty($prenom) || empty($email) || empty($password) || empty($confirm_password) || empty($classe_id)) {
         die("Erreur : Tous les champs sont obligatoires !");
     }
 
@@ -31,32 +30,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         $conn->beginTransaction();
 
-        // Insertion du professeur
-        $sql = "INSERT INTO professeurs (prenom_professeur, nom_professeur, email_professeur, mot_de_passe_professeur, matricule_professeur) 
-                VALUES (?, ?, ?, ?, ?) RETURNING id";
+        // Insertion de l'étudiant
+        $sql = "INSERT INTO etudiants (prenom_etudiant, nom_etudiant, email_etudiant, mot_de_passe_etudiant, numero_matricule, classe_id) 
+                VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([$prenom, $nom, $email, $hashed_password, $matricule]);
-        $professeur_id = $stmt->fetch(PDO::FETCH_ASSOC)['id'];
-
-        // Insertion dans la table professeur_matiere
-        $sql_matiere = "INSERT INTO professeur_matiere (professeur_id, matiere_id) VALUES (?, ?)";
-        $stmt_matiere = $conn->prepare($sql_matiere);
-        $stmt_matiere->execute([$professeur_id, $matiere_id]);
-
-        // Insertion dans la table professeur_classe
-        $sql_classe = "INSERT INTO professeur_classe (professeur_id, classe_id) VALUES (?, ?)";
-        $stmt_classe = $conn->prepare($sql_classe);
-        $stmt_classe->execute([$professeur_id, $classe_id]);
+        $stmt->execute([$prenom, $nom, $email, $hashed_password, $matricule, $classe_id]);
 
         $conn->commit();
-
         echo "<div class='overlay'>
                 <div class='loader'></div>
                 <p class='message'>Veuillez patienter...</p>
               </div>
               <script>
                   setTimeout(() => {
-                      document.querySelector('.message').textContent = 'Professeur enregistré avec succès ✅';
+                      document.querySelector('.message').textContent = 'Étudiant enregistré avec succès ✅';
                   }, 2000);
                   setTimeout(() => {
                       window.location.href='administration.php';
@@ -68,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-$matieres = $conn->query("SELECT id, nom_matiere FROM matieres")->fetchAll(PDO::FETCH_ASSOC);
 $classes = $conn->query("SELECT id, nom_classe FROM classes")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -77,7 +63,7 @@ $classes = $conn->query("SELECT id, nom_classe FROM classes")->fetchAll(PDO::FET
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription Professeur</title>
+    <title>Inscription Étudiant</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .overlay {
@@ -125,7 +111,7 @@ $classes = $conn->query("SELECT id, nom_classe FROM classes")->fetchAll(PDO::FET
 <body>
 <div class="container">
     <div class="header">
-        <h1>Formulaire d'enregistrement de Professeur</h1>
+        <h1>Formulaire d'Inscription d'Étudiant</h1>
         <p>ESATIC - École Supérieure Africaine des TIC</p>
     </div>
 
@@ -143,14 +129,6 @@ $classes = $conn->query("SELECT id, nom_classe FROM classes")->fetchAll(PDO::FET
             <input type="text" name="matricule" class="input-field" placeholder="Numéro Matricule" required>
         </div>
         <div class="input-group">
-            <select name="matiere" class="input-field" required>
-                <option value="">Sélectionnez une matière</option>
-                <?php foreach ($matieres as $matiere) { ?>
-                    <option value="<?php echo $matiere['id']; ?>"><?php echo $matiere['nom_matiere']; ?></option>
-                <?php } ?>
-            </select>
-        </div>
-        <div class="input-group">
             <select name="classe" class="input-field" required>
                 <option value="">Sélectionnez une classe</option>
                 <?php foreach ($classes as $classe) { ?>
@@ -164,7 +142,7 @@ $classes = $conn->query("SELECT id, nom_classe FROM classes")->fetchAll(PDO::FET
         <div class="input-group">
             <input type="password" name="confirm_password" class="input-field" placeholder="Confirmer Mot de passe" required>
         </div>
-        <button type="submit" class="submit-btn">Ajouter le professeur</button>
+        <button type="submit" class="submit-btn">Ajouter l'étudiant</button>
     </form>
 </div>
 </body>
