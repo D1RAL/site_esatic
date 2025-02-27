@@ -1,3 +1,15 @@
+<?php
+require '../dbconnection.php'; // Inclure le fichier de connexion
+
+// ID de l'étudiant à afficher (exemple: 1)
+$id_administration = 1;
+
+// Requête SQL pour récupérer le nom de l'étudiant
+$stmt = $pdo->prepare("SELECT nom_admin FROM administration WHERE id = ?");
+$stmt->execute([$id_administration]);
+$etudiant = $stmt->fetch(PDO::FETCH_ASSOC);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -163,7 +175,7 @@
     <div class="content" id="hero">
       <div class="container mt-4">
         <header class="mb-4">
-            <h1 class="text-center">Bienvenue, Professeur Goli</h1>
+            <h1 class="text-center">Bienvenue, Professeur <?php echo htmlspecialchars($etudiant['nom_admin']); ?></h1>
         </header>
     
         <!-- Widgets -->
