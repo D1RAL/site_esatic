@@ -1,3 +1,30 @@
+<?php
+session_start();
+include('../dbconnection.php'); // Connexion à la base de données
+
+if (isset($_SESSION['admin_email'])) {
+    $email = $_SESSION['admin_email'];
+
+    // Vérification si la session existe
+    $sql = "SELECT nom_admin FROM administration WHERE admin_email = :email";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':email', $email);
+    $stmt->execute();
+    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($admin && !empty($admin['nom_admin'])) {
+        $nom_admin = htmlspecialchars($admin['nom_admin']); // Sécurisation
+    } else {
+        $nom_admin = "Admin"; // Si aucun nom n'est trouvé
+    }
+} else {
+    echo "<script>alert('Veuillez vous connecter d'abord'); window.location.href='../login.php';</script>";
+    exit();
+}
+?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,8 +36,8 @@
   <meta content="" name="keywords">
 
   <!-- Favicons -->
-  <link href="assets/img/favicon.png" rel="icon">
-  <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+  <link href="../assets/img/favicon.png" rel="icon">
+  <link href="../assets/img/apple-touch-icon.png" rel="apple-touch-icon">
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -18,14 +45,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
   <!-- Vendor CSS Files -->
-  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-  <link href="assets/vendor/aos/aos.css" rel="stylesheet">
-  <link href="assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
-  <link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+  <link href="../assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="../assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="../assets/vendor/aos/aos.css" rel="stylesheet">
+  <link href="../assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+  <link href="../assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
 
   <!-- Main CSS File -->
-  <link href="assets/css/main.css" rel="stylesheet">
+  <link href="../assets/css/main.css" rel="stylesheet">
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -140,7 +167,7 @@
 <body class="index-page">
 
   <div class="top-image-container">
-    <img src="assets/img/esatic.webp" alt="Image description" class="top-image">
+    <img src="../assets/img/esatic.webp" alt="Image description" class="top-image">
   </div>
 
   <header id="header" class="header d-flex flex-column justify-content-center">
@@ -150,8 +177,8 @@
     <nav id="navmenu" class="navmenu">
       <ul>
         <li><a href="#hero" class="active"><i class="bi bi-house-door navicon"></i><span>Tableau de bord</span></a></li>
-        <li><a href="#about"><i class="bi bi-book navicon"></i><span>Mes documents</span></a></li>
-        <li><a href="#resume"><i class="bi bi-book navicon"></i><span>Mes notes</span></a></li>
+        <li><a href="#about"><i class="bi bi-book navicon"></i><span>Gestion Professeurs</span></a></li>
+        <li><a href="#resume"><i class="bi bi-book navicon"></i><span>Gestion Etudiants</span></a></li>
         <li><a href="#appointment"><i class="bi bi-pencil-square navicon"></i><span>Résultats</span></a></li>
         <li><a href="#"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
       </ul>
@@ -163,7 +190,9 @@
     <div class="content" id="hero">
       <div class="container mt-4">
         <header class="mb-4">
-            <h1 class="text-center">Bienvenue, Professeur Goli</h1>
+        <h1 class="text-center">Bienvenue, <?php echo htmlspecialchars($nom_admin ?? "Admin"); ?></h1>
+
+
         </header>
     
         <!-- Widgets -->
@@ -275,81 +304,19 @@
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>MES DOCUMENTS</h2>
-        <p>Récupère ici tous tes documents selon la matière.</p>
+        <h2>GESTION DES PROFESSEURS</h2>
+        <p>Ici, vous gérez les professeurs.</p>
       </div>
     
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
-        <div class="row gy-4 justify-content-center">
-    
-          <!-- Liste des cours -->
-          <div class="col-lg-10">
-            <h3>Liste des classes</h3>
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Classe</th>
-                  <th>Code</th>
-                  <th>Intitulé</th>
-                  <th>Horaires</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>SRIT2A</td>
-                  <td>INF101</td>
-                  <td>Introduction à l'informatique</td>
-                  <td>Lundi 8h - 10h</td>
-                  <td>
-                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
-                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
-                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
-                    <button class="btn btn-success">Liste de classe</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>SRIT2B</td>
-                  <td>MAT201</td>
-                  <td>Mathématiques avancées</td>
-                  <td>Mercredi 14h - 16h</td>
-                  <td>
-                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
-                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
-                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
-                    <button class="btn btn-success">Liste de classe</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>RTEL2</td>
-                  <td>MAT201</td>
-                  <td>Mathématiques avancées</td>
-                  <td>Mercredi 14h - 16h</td>
-                  <td>
-                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
-                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
-                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
-                    <button class="btn btn-success">Liste de classe</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>SIGL2</td>
-                  <td>MAT201</td>
-                  <td>Mathématiques avancées</td>
-                  <td>Mercredi 14h - 16h</td>
-                  <td>
-                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
-                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
-                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
-                    <button class="btn btn-success">Liste de classe</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-    
-        </div>
-      </div>
+      <div class="d-flex justify-content-center mt-4">
+    <button class="btn btn-primary mx-2" onclick="window.location.href='ajoutprof.php'">Ajouter un professeur</button>
+    <button class="btn btn-primary mx-2" onclick="window.location.href='modifprof.php'">Modifier un professeur</button>
+    <button class="btn btn-primary mx-2">Supprimer un professeur</button>
+    <button class="btn btn-primary mx-2">Uploader l'emploi du temps</button>
+    <button class="btn btn-primary mx-2">Voir les professeurs</button>
+</div>
+
+      
     
     </section>
 
@@ -357,57 +324,17 @@
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>Gestion des notes</h2>
-        <p>Renseignez vos notes et calculer votre moyenne</p>
+        <h2>GESTION DES ETUDIANTS</h2>
+        <p>Gérez tous les détails sur les étudiants de l'ESATIC.</p>
       </div><!-- End Section Title -->
     
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
-    
-        <div class="row gy-4 justify-content-center">
-          
-          <div class="col-lg-15 content">
-            <h2>Gestion des notes</h2>
-
-            <div class="mb-3">
-              <label for="subjectSelect" class="form-label">Sélectionner une matière</label>
-              <select id="subjectSelect" class="form-control">
-                <option value="Mathématiques">Algo</option>
-                <option value="Physique">Physique</option>
-                <option value="Chimie">Python</option>
-                <option value="Informatique">Geo-diff</option>
-              </select>
-          </div>
-
-          
-            
-            <table style="width: 100%" id="notesTable" class="table table-bordered">
-              <thead>
-                <tr>
-                    <th style="width: 10%">Nom</th>
-                    <th style="width: 10%">Note </th>
-                    
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td rowspan="1000">Dagou</td>
-                  <td><input type="number" class="form-control note"></td>
-                </tr>
-              </tbody>
-            </table>
-            <button class="btn btn-primary add-row-btn">Ajouter une note</button>
-            <button class="btn btn-success calculate-btn">Calculer la Moyenne</button>
-            <h3 class="mt-4">Moyenne générale: <span id="average">-</span></h3>
-          </div>
-          <table id="subjectAverageTable" class="subject-average-table">
-            <thead>
-              <tr>
-                <th>Matière</th>
-                <th>Moyenne</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+      <div class="d-flex justify-content-center mt-4">
+        <button class="btn btn-primary mx-2" onclick="window.location.href='addetudiant.php'">Ajouter un étudiant</button>
+        <button class="btn btn-primary mx-2">Modifier un étudiant</button>
+        <button class="btn btn-primary mx-2">Supprimer un étudiant</button>
+        <button class="btn btn-primary mx-2" onclick="window.location.href='uploadprogram.php'">Uploader l'emploi du temps</button>
+        <button class="btn btn-primary mx-2">Voir les étudiants</button>
+      </div>
         
           <script>
        
@@ -540,19 +467,19 @@
   <div id="preloader"></div>
 
   <!-- Vendor JS Files -->
-  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/vendor/php-email-form/validate.js"></script>
-  <script src="assets/vendor/aos/aos.js"></script>
-  <script src="assets/vendor/typed.js/typed.umd.js"></script>
-  <script src="assets/vendor/purecounter/purecounter_vanilla.js"></script>
-  <script src="assets/vendor/waypoints/noframework.waypoints.js"></script>
-  <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
-  <script src="assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
-  <script src="assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
-  <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
+  <script src="../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/vendor/php-email-form/validate.js"></script>
+  <script src="../assets/vendor/aos/aos.js"></script>
+  <script src="../assets/vendor/typed.js/typed.umd.js"></script>
+  <script src="../assets/vendor/purecounter/purecounter_vanilla.js"></script>
+  <script src="../assets/vendor/waypoints/noframework.waypoints.js"></script>
+  <script src="../assets/vendor/glightbox/js/glightbox.min.js"></script>
+  <script src="../assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+  <script src="../assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+  <script src="../assets/vendor/swiper/swiper-bundle.min.js"></script>
 
   <!-- Main JS File -->
-  <script src="assets/js/main.js"></script>
+  <script src="../assets/js/main.js"></script>
 
   <script>
     // Récupérer les paramètres de l'URL
