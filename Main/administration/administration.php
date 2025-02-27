@@ -309,12 +309,13 @@ if (isset($_SESSION['admin_email'])) {
       </div>
     
       <div class="d-flex justify-content-center mt-4">
-        <button class="btn btn-primary mx-2">Ajouter un professeur</button>
-        <button class="btn btn-primary mx-2">Modifier un professeur</button>
-        <button class="btn btn-primary mx-2">Supprimer un professeur</button>
-        <button class="btn btn-primary mx-2">Uploader l'emploi du temps</button>
-        <button class="btn btn-primary mx-2">Voir les professeurs</button>
-      </div>
+    <button class="btn btn-primary mx-2" onclick="window.location.href='ajoutprof.php'">Ajouter un professeur</button>
+    <button class="btn btn-primary mx-2">Modifier un professeur</button>
+    <button class="btn btn-primary mx-2">Supprimer un professeur</button>
+    <button class="btn btn-primary mx-2">Uploader l'emploi du temps</button>
+    <button class="btn btn-primary mx-2">Voir les professeurs</button>
+</div>
+
       
     
     </section>
