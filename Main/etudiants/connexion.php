@@ -1,6 +1,8 @@
 <?php
 session_start(); // Toujours mettre ça en haut
 
+$message = ""; // Variable pour stocker les messages d'erreur
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $dsn = "pgsql:host=localhost;dbname=site_esatic";
     $username = "postgres";
@@ -23,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $sql = "SELECT * FROM etudiants WHERE email_etudiant = :email";
                 $password_column = 'mot_de_passe_etudiant';
             } else {
-                echo "<script>alert('Rôle invalide');</script>";
+                $message = "Rôle invalide.";
                 exit();
             }
 
@@ -36,14 +38,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['email'] = $email;
                 $_SESSION['role'] = $role;
-                echo "<script>window.location.href='etudiants.php';</script>";
+                header("Location: etudiants.php");
                 exit();
             } else {
-                echo "<script>alert('Email ou mot de passe incorrect');</script>";
+                $message = "Email ou mot de passe incorrect.";
             }
         }
     } catch (PDOException $e) {
-        echo "Erreur : " . $e->getMessage();
+        $message = "Erreur de connexion à la base de données : " . $e->getMessage();
     }
 }
 ?>
@@ -63,6 +65,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="divider"></div>
             <p class="subtitle">ESATIC - École Supérieure Africaine des TIC</p>
         </div>
+
+        <?php if ($message): ?>
+            <div class="alert alert-danger">
+                <?php echo htmlspecialchars($message); ?>
+            </div>
+        <?php endif; ?>
 
         <form id="authForm" method="POST" action="">
             <div class="input-group">
