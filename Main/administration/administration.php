@@ -18,7 +18,7 @@ if (isset($_SESSION['admin_email'])) {
         $nom_admin = "Admin"; // Si aucun nom n'est trouvé
     }
 } else {
-    echo "<script>alert('Veuillez vous connecter d'abord'); window.location.href='../connexion.php';</script>";
+    echo "<script>; window.location.href='../connexion.php';</script>";
     exit();
 }
 ?>
@@ -180,7 +180,7 @@ if (isset($_SESSION['admin_email'])) {
         <li><a href="#about"><i class="bi bi-book navicon"></i><span>Gestion Professeurs</span></a></li>
         <li><a href="#resume"><i class="bi bi-book navicon"></i><span>Gestion Etudiants</span></a></li>
         <li><a href="#appointment"><i class="bi bi-pencil-square navicon"></i><span>Résultats</span></a></li>
-        <li><a href="#"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
+        <li><a href="logout.php"><i class="bi bi-calendar navicon"></i><span>Déconnexion</span></a></li>
       </ul>
     </nav>
 
@@ -310,10 +310,9 @@ if (isset($_SESSION['admin_email'])) {
     
       <div class="d-flex justify-content-center mt-4">
     <button class="btn btn-primary mx-2" onclick="window.location.href='ajoutprof.php'">Ajouter un professeur</button>
-    <button class="btn btn-primary mx-2" onclick="window.location.href='modifprof.php'">Modifier un professeur</button>
-    <button class="btn btn-primary mx-2">Supprimer un professeur</button>
+    <button class="btn btn-primary mx-2" onclick="window.location.href='modifprof.php'">Modifier/Supprimer un professeur</button>
     <button class="btn btn-primary mx-2">Uploader l'emploi du temps</button>
-    <button class="btn btn-primary mx-2">Voir les professeurs</button>
+    <button class="btn btn-primary mx-2" onclick="window.location.href='telecharge_professeurs.php'">Voir les professeurs</button>
 </div>
 
       
@@ -330,10 +329,9 @@ if (isset($_SESSION['admin_email'])) {
     
       <div class="d-flex justify-content-center mt-4">
         <button class="btn btn-primary mx-2" onclick="window.location.href='addetudiant.php'">Ajouter un étudiant</button>
-        <button class="btn btn-primary mx-2">Modifier un étudiant</button>
-        <button class="btn btn-primary mx-2">Supprimer un étudiant</button>
+        <button class="btn btn-primary mx-2" onclick="window.location.href='modifetudiant.php'">Modifier/Supprimer un étudiant</button>
         <button class="btn btn-primary mx-2" onclick="window.location.href='uploadprogram.php'">Uploader l'emploi du temps</button>
-        <button class="btn btn-primary mx-2">Voir les étudiants</button>
+        <button class="btn btn-primary mx-2" onclick="window.location.href='telecharge_etudiants.php'">Voir les étudiants</button>
       </div>
         
           <script>
