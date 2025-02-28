@@ -1,104 +1,3 @@
-<?php
-session_start();
-
-// Vérifier si l'utilisateur est connecté et si son rôle est 'professeur'
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professeur') {
-    die("Erreur : Vous devez être connecté en tant que professeur pour accéder à cette page.");
-}
-
-$professeur_id = $_SESSION['user_id'];  // Récupérer l'ID du professeur depuis la session
-
-// Connexion à la base de données
-$host = 'localhost';
-$dbname = 'site_esatic';
-$user = 'samuel';
-$password = 'cedric225';
-
-try {
-    $conn = new PDO("pgsql:host=$host;dbname=$dbname", $user, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Erreur de connexion : " . $e->getMessage());
-}
-
-// Récupérer les données du formulaire
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $classe = $_POST['department'];
-  $jour = $_POST['doctor_day']; // Ajoutez un champ pour le jour dans votre formulaire
-  $heure_debut = $_POST['doctor_start_time']; // Ajoutez un champ pour l'heure de début
-  $heure_fin = $_POST['doctor_end_time']; // Ajoutez un champ pour l'heure de fin
-
-  // Vérifier si les champs sont remplis
-  if (!empty($classe) && !empty($jour) && !empty($heure_debut) && !empty($heure_fin)) {
-      
-      // Récupérer l'ID de la classe
-      $query_classe = "SELECT id FROM classes WHERE nom_classe = ?";
-      $stmt_classe = $conn->prepare($query_classe);
-      $stmt_classe->execute([$classe]);
-      $classe_id = $stmt_classe->fetchColumn();
-
-      // Insertion dans la table des rattrapages
-      $query_rattrapage = "
-          INSERT INTO rattrapages (professeur_id, classe_id, jour, heure_debut, heure_fin)
-          VALUES (?, ?, ?, ?, ?)
-      ";
-      $stmt_rattrapage = $conn->prepare($query_rattrapage);
-      $stmt_rattrapage->execute([$professeur_id, $classe_id, $jour, $heure_debut, $heure_fin]);
-
-      // Optionnel : Envoyer des notifications ou des emails aux étudiants de la classe
-      // Exemple : récupérer les étudiants de la classe et leur envoyer une notification
-      // (Cela nécessiterait l'ajout de la logique pour récupérer les étudiants et envoyer des notifications.)
-  }
-}
-
-// Récupérer les classes et matières enseignées par le professeur
-$query = "
-    SELECT DISTINCT cl.nom_classe, m.nom_matiere
-    FROM professeur_classe pc
-    JOIN classes cl ON pc.classe_id = cl.id
-    JOIN professeur_matiere pm ON pc.professeur_id = pm.professeur_id
-    JOIN matieres m ON pm.matiere_id = m.id
-    JOIN ue u ON m.ue_id = u.id
-    JOIN niveaux n ON cl.niveau_id = n.id AND u.niveau_id = n.id
-    WHERE pc.professeur_id = ?
-";
-
-$stmt = $conn->prepare($query);
-$stmt->execute([$professeur_id]);
-$classes_matieres = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Récupérer les informations du professeur
-$query_professeur = "SELECT nom_professeur, prenom_professeur FROM professeurs WHERE id = ?";
-$stmt_professeur = $conn->prepare($query_professeur);
-$stmt_professeur->execute([$professeur_id]);
-$professeur = $stmt_professeur->fetch(PDO::FETCH_ASSOC);
-
-// Récupérer les fichiers uploadés pour ce professeur depuis la table fichier_prof
-$query_files = "
-    SELECT fp.fichier_pdf, fp.date_telechargement
-    FROM fichier_prof fp
-    WHERE fp.professeur_id = ?
-";
-$stmt_files = $conn->prepare($query_files);
-$stmt_files->execute([$professeur_id]);
-$files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
-
-// Organisation des données pour un affichage structuré
-$data = [];
-foreach ($classes_matieres as $row) {
-    $classe = $row['nom_classe'];
-    $matiere = $row['nom_matiere'];
-
-    if (!isset($data[$classe])) {
-        $data[$classe] = [];
-    }
-
-    if ($matiere && !in_array($matiere, $data[$classe])) {
-        $data[$classe][] = $matiere;
-    }
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -352,26 +251,40 @@ foreach ($classes_matieres as $row) {
       <div class="container" data-aos="fade-up" data-aos-delay="100">
         <div class="row gy-4 justify-content-center">
     
-          <div class="col-lg-10 mobile-list"> 
-            <?php if (!empty($data)) : ?>
-              <?php foreach ($data as $classe => $matieres) : ?>
-                <div class="card mb-3">
-                  <div class="card-body">
-                    <h5 class="card-title"><?= htmlspecialchars($classe) ?></h5>
+          <!-- Vue mobile en cartes -->
+          <div class="col-lg-10 mobile-list">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">SRIT2A</h5>
                     <p><strong>Code :</strong> INF101</p>
-                    <p><strong>Intitulés :</strong> <?= htmlspecialchars(implode(', ', array_unique($matieres))) ?></p>
+                    <p><strong>Intitulé :</strong> Introduction à l'informatique</p>
                     <p><strong>Horaires :</strong> Lundi 8h - 10h</p>
                     <div class="d-flex flex-wrap gap-2">
-                      <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
-                      <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
-                      <a href="note.html" class="btn btn-danger">Saisir Notes</a>
-                      <button class="btn btn-success">Liste de classe</button>
+                        <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
+                        <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
+                        <a href="note.html" class="btn btn-danger">Saisir Notes</a>
+                        <button class="btn btn-success">Liste de classe</button>
                     </div>
-                  </div>
                 </div>
-              <?php endforeach; ?>
-            <?php endif; ?>
+            </div>
+    
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">SRIT2B</h5>
+                    <p><strong>Code :</strong> MAT201</p>
+                    <p><strong>Intitulé :</strong> Mathématiques avancées</p>
+                    <p><strong>Horaires :</strong> Mercredi 14h - 16h</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
+                        <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
+                        <a href="note.html" class="btn btn-danger">Saisir Notes</a>
+                        <button class="btn btn-success">Liste de classe</button>
+                    </div>
+                </div>
+            </div>
+    
           </div>
+    
         </div>
       </div>
     
@@ -404,55 +317,43 @@ foreach ($classes_matieres as $row) {
         <p>La fonctionnalité de prise de rendez-vous en ligne de Medicor vous permet de planifier vos consultations</p>
       </div><!-- End Section Title -->
   
-      <!-- Formulaire HTML -->
       <div class="container" data-aos="fade-up" data-aos-delay="100">
-          <form method="POST" id="appointment-form" role="form">
-              <div class="row">
-                  <div class="col-md-4 form-group mt-3">
-                      <select name="department" id="department" class="form-select" required>
-                          <option value="">Sélectionnez la classe</option>
-                          <?php
-                          // Afficher dynamiquement les classes enseignées par le professeur
-                          foreach ($data as $classe => $matieres) {
-                              echo "<option value=\"$classe\">$classe</option>";
-                          }
-                          ?>
-                      </select>
-                  </div>
-                  <div class="col-md-4 form-group mt-3">
-                      <input type="date" name="doctor_day" class="form-control" required>
-                  </div>
-                  <div class="col-md-4 form-group mt-3">
-                      <input type="time" name="doctor_start_time" class="form-control" required>
-                  </div>
-                  <div class="col-md-4 form-group mt-3">
-                      <input type="time" name="doctor_end_time" class="form-control" required>
-                  </div>
-              </div>
-              <div class="mt-3">
-                  <div class="text-center">
-                      <button type="submit" class="btn btn-success">VALIDER</button>
-                  </div>
-              </div>
-          </form>
+        <form method='POST' id="appointment-form" role="form">
+          <div class="row">
+            <div class="col-md-4 form-group mt-3">
+              <select name="department" id="department" class="form-select" required="">
+                <option value="">Sélectionnez la classe</option>
+                <option value="SRIT2A">SRIT2A</option>
+                <option value="SRIT2B">SRIT2B</option>
+              </select>
+            </div>
+            <div class="col-md-4 form-group mt-3">
+                <select name="doctor" id="doctor" class="form-select" required="">
+                    <option value="">Sélectionnez le jour</option>
+                    <option value="Dr. NOMEL">buyb</option>
+                    <option value="Dr.ABIALY">b67u7</option>
+                    <option value="Dr. ECHICOUA">b78j7</option>
+                </select>
+            </div>
+            <div class="col-md-4 form-group mt-3">
+              <select name="doctor" id="doctor" class="form-select" required="">
+                  <option value="">Sélectionnez l'heure</option>
+                  <option value="Dr. NOMEL">07h45-10h00</option>
+                  <option value="Dr.ABIALY">10h15-12h45</option>
+              </select>
+          </div>
+          </div>
+
+          <div class="mt-3">
+            <div class="text-center">
+                <button type="submit" class="btn btn-success">VALIDER</button>
+            </div>
+          </div>
+        </form>
       </div>
 
     </section>
 
-    <h3>Vos fichiers uploadés :</h3>
-    <?php if (!empty($files)) : ?>
-        <ul>
-            <?php foreach ($files as $file) : ?>
-                <li>
-                    <a href="telecharger_fichier.php?file=<?= urlencode($file['fichier_pdf']) ?>">
-                        <?= htmlspecialchars($file['fichier_pdf']) ?>
-                    </a> - Date : <?= htmlspecialchars($file['date_telechargement']) ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php else : ?>
-        <p>Aucun fichier trouvé.</p>
-    <?php endif; ?>
   </main>
 
   <footer id="footer" class="footer position-relative light-background">
