@@ -1,6 +1,9 @@
 <?php
 session_start(); // Toujours mettre ça en haut
 
+// Initialisation des messages d'erreur
+$error_message = '';
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $dsn = "pgsql:host=localhost;dbname=site_esatic";
     $username = "postgres";
@@ -25,14 +28,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['admin_id'] = $admin['id'];
                 $_SESSION['nom_admin'] = $admin['nom_admin'];
                 $_SESSION['admin_email'] = $admin['admin_email']; //🔥 On stocke l'email
-                echo "<script>window.location.href='administration.php';</script>";
+                header('Location: administration.php');
                 exit();
             } else {
-                echo "<script>alert('Email ou mot de passe incorrect');</script>";
+                $error_message = 'Email ou mot de passe incorrect.';
             }
         }
     } catch (PDOException $e) {
-        echo "Erreur : " . $e->getMessage();
+        // Gérer l'erreur de connexion à la base de données
+        $error_message = 'Erreur de connexion à la base de données.';
     }
 }
 ?>
@@ -68,6 +72,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
 
             <button type="submit" class="submit-btn">Se connecter</button>
+
+            <?php if ($error_message): ?>
+                <div class="error-message" style="color: red; margin-top: 10px;">
+                    <?php echo $error_message; ?>
+                </div>
+            <?php endif; ?>
         </form>
 
         <div class="toggle-mode">

@@ -216,7 +216,7 @@ if (isset($_SESSION['admin_email'])) {
     
         <!-- Derniers fichiers téléversés -->
         <div class="mt-4">
-            <h3>Derniers fichiers téléversés</h3>
+            <h3>Consulter listes de classes et emplois du temps</h3>
             <table class="table table-striped">
                 <thead>
                     <tr>
