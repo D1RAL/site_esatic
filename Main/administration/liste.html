@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Dynamique des Étudiants</title>
+    <link rel="stylesheet" href="liste.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+</head>
+<body>
+
+    <div class="container">
+        <h1>Liste des étudiants</h1>
+
+        <!-- Barre de recherche -->
+        <div class="seacher">
+            <form action="">
+                <input type="text" name="" placeholder="Recherche...">
+                <i class="fa-solid fa-search"></i>
+            </form>
+        </div>
+        <!-- Tableau dynamique -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Matricule</th>
+                    <th>Classe</th>
+                    <th>Date de Naissance</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">  
+                <!-- Les étudiants seront ajoutés ici -->
+                <td>etudiant.nom</td>
+                <td>etudiant.prenom</td>
+                <td>etudiant.matricule</td>
+                <td>etudiant.classe</td>
+                <td>etudiant.dateNaissance</td>
+            </tbody>
+            <tbody id="tableBody">
+                <!-- Les étudiants seront ajoutés ici -->
+                <td>etudiant.nom</td>
+                <td>etudiant.prenom</td>
+                <td>etudiant.matricule</td>
+                <td>etudiant.classe</td>
+                <td>etudiant.dateNaissance</td>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="JStext.js"></script>
+</body>
+</html>
