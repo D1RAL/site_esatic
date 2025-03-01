@@ -16,6 +16,7 @@ if (!$etudiant_id) {
     exit();
 }
 
+
 try {
     // Récupérer les notes de l'étudiant
     $sql = "
@@ -30,10 +31,24 @@ try {
         ORDER BY m.nom_matiere, e.type_evaluation
     ";
 
+
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':etudiant_id', $etudiant_id, PDO::PARAM_INT);
     $stmt->execute();
     $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    
+    $sql2 = "
+      SELECT 
+          etu.nom_etudiant
+      FROM etudiants etu
+      WHERE etu.id = :etudiant_id
+    ";
+
+    $stmt2 = $pdo->prepare($sql2);
+    $stmt2->bindParam(':etudiant_id', $etudiant_id, PDO::PARAM_INT);
+    $stmt2->execute();
+    $nom_etudiant = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
     echo "Erreur : " . $e->getMessage();
@@ -181,7 +196,7 @@ try {
     <div class="content" id="hero">
       <div class="container mt-4">
         <header class="mb-4">
-            <h1 class="text-center">Bienvenue, Professeur Goli</h1>
+            <h1 class="text-center">Bienvenue, <?= htmlspecialchars($nom_etudiant['nom_etudiant']); ?></h1>
         </header>
       </div>
     </div>

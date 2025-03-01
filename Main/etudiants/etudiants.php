@@ -22,13 +22,15 @@ try {
     if ($etudiant) {
         $nom_etudiant = htmlspecialchars($etudiant['nom_etudiant']);
         $prenom_etudiant = htmlspecialchars($etudiant['prenom_etudiant']);
+        $etudiant_id = htmlentities($etudiant['id']);
         $classe_id = $etudiant['classe_id']; // Récupération de l'ID de la classe de l'étudiant
 
         // Récupération des fichiers pour cette classe
         $sql_fichiers = "
-            SELECT f.id, f.nom_fichier, f.chemin_fichier 
+            SELECT f.id, f.nom_fichier, f.chemin_fichier, f.type_fichier, pf.nom_professeur, pf.prenom_professeur
             FROM fichiers f
             JOIN fichier_classe fc ON f.id = fc.fichier_id
+            JOIN professeurs pf ON pf.id = f.professeur_id
             WHERE fc.classe_id = :classe_id
         ";
         $stmt_fichiers = $pdo->prepare($sql_fichiers);
@@ -47,6 +49,37 @@ try {
         $stmt_calendrier->bindParam(':etudiant_id', $etudiant['id']);
         $stmt_calendrier->execute();
         $evenements = $stmt_calendrier->fetchAll(PDO::FETCH_ASSOC);
+
+        $sql_matiere_classe = "
+        SELECT mat.nom_matiere
+        FROM matieres mat
+        JOIN professeur_classe_matiere pcm ON pcm.matiere_id = mat.id
+        WHERE pcm.classe_id = :classe_id
+        ";
+
+        $stmt_matiere_classe = $pdo->prepare($sql_matiere_classe);
+        $stmt_matiere_classe->bindParam(':classe_id', $classe_id);
+        $stmt_matiere_classe->execute();
+        $matiere_classe = $stmt_matiere_classe->fetchAll(PDO::FETCH_ASSOC);
+
+        $sql_classes = "
+        SELECT c.id, c.nom_classe 
+        FROM classes c
+        JOIN niveaux n ON c.niveau_id = n.id
+        WHERE n.id = (
+            SELECT n.id 
+            FROM niveaux n
+            JOIN classes cl ON cl.niveau_id = n.id
+            JOIN etudiants e ON e.classe_id = cl.id
+            WHERE e.id = :etudiant_id
+        );
+
+        ";
+
+        $stmt_classes = $pdo->prepare($sql_classes);
+        $stmt_classes->bindParam(':etudiant_id', $etudiant_id);
+        $stmt_classes->execute();
+        $classes = $stmt_classes->fetchAll(PDO::FETCH_ASSOC);
 
     } else {
         echo "<script>alert('Étudiant introuvable'); window.location.href='connexion.php';</script>";
@@ -224,9 +257,9 @@ try {
     <div class="content" id="hero">
       <div class="container mt-4">
         <header class="mb-4">
-        <h1 class="text-center">
-        Bienvenue, <?php echo $etudiant ? htmlspecialchars($etudiant['nom_etudiant']) : "Professeur Goli"; ?>
-    </h1>
+          <h1 class="text-center">
+          Bienvenue, <?php echo $etudiant ? htmlspecialchars($etudiant['nom_etudiant']) : "Professeur Goli"; ?>
+          </h1>
         </header>
     
         <!-- Widgets -->
@@ -368,6 +401,7 @@ try {
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
         <h2>MES DOCUMENTS</h2>
+        <button class="btn btn-success" onclick="openModal()">Ajouter Documents</button>
         <p>Récupère ici tous tes documents selon la matière.</p>
       </div>
     
@@ -380,6 +414,8 @@ try {
               <thead>
                 <tr>
                   <th>Nom</th>
+                  <th>Type de document</th>
+                  <th>Professeur</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -388,6 +424,8 @@ try {
                   <?php foreach ($fichiers as $fichier): ?>
                     <tr>
                       <td><?php echo htmlspecialchars($fichier['nom_fichier']); ?></td>
+                      <td><?php echo htmlspecialchars($fichier['type_fichier']); ?></td>
+                      <td><?php echo htmlspecialchars($fichier['nom_professeur']) . ' ' . htmlspecialchars($fichier['prenom_professeur']); ?></td>
                       <td>
                         <a href="note.html" class="btn btn-danger">Telecharger</a>
                       </td>
@@ -466,10 +504,9 @@ try {
             <div class="mb-3">
               <label for="subjectSelect" class="form-label">Sélectionner une matière</label>
               <select id="subjectSelect" class="form-control">
-                <option value="Mathématiques">Algo</option>
-                <option value="Physique">Physique</option>
-                <option value="Chimie">Python</option>
-                <option value="Informatique">Geo-diff</option>
+                <?php foreach($matiere_classe as $matiere): ?>
+                  <option value="<?= htmlspecialchars($matiere['nom_matiere']); ?>"> <?= htmlspecialchars($matiere['nom_matiere']); ?> </option>
+                <?php endforeach; ?>
               </select>
           </div>
 
@@ -478,14 +515,12 @@ try {
             <table style="width: 100%" id="notesTable" class="table table-bordered">
               <thead>
                 <tr>
-                    <th style="width: 10%">Nom</th>
-                    <th style="width: 10%">Note </th>
+                    <th style="width: 1%">Note </th>
                     
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td rowspan="1000">Dagou</td>
                   <td><input type="number" class="form-control note"></td>
                 </tr>
               </tbody>
@@ -513,7 +548,6 @@ try {
            
               const firstRow = `
                 <tr>
-                     <td rowspan="1000">Dagou</td>
                         <td><input type="number" class="form-control note"></td>
                 </tr>
               `;
@@ -576,22 +610,49 @@ try {
     </section>
 
     
-    
-    <!-- Fenêtre Modale -->
+    <!-- Fenêtre modale -->
     <div id="uploadModal" class="modal">
       <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
         <h3 id="modalTitle">Téléverser un fichier</h3>
-        <p>Sélectionnez les classes concernées :</p>
-        <form id="uploadForm">
-          <label><input type="checkbox" name="classe" value="L1 Informatique"> SRIT2A</label><br>
-          <label><input type="checkbox" name="classe" value="L2 Informatique"> SRIT2B</label><br>
-    
-          <input type="file" id="fileInput" class="form-control mb-2" accept=".pdf,.xls,.xlsx">
+
+        <form id="uploadForm" method="POST" action="upload_fichiers.php" enctype="multipart/form-data">
+          <!-- Sélection des classes -->
+          <div class="col-md-4 form-group mt-3">
+            <label>Sélectionnez les classes :</label>
+            <?php if (!empty($classes)) : ?>
+              <?php foreach ($classes as $classe) : ?>
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="classe_<?= $classe['id'] ?>" name="classes[]" value="<?= $classe['id'] ?>">
+                  <label class="form-check-label" for="classe_<?= $classe['id'] ?>">
+                    <?= htmlspecialchars($classe['nom_classe']) ?>
+                  </label>
+                </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+
+          <!-- Sélection du type de fichier -->
+          <div class="form-group mt-3">
+            <label for="fileType">Type de fichier :</label>
+            <select name="fileType" id="fileType" class="form-control">
+              <option value="TD">TD</option>
+              <option value="Cours">Cours</option>
+              <option value="Exercice">Exercice</option>
+            </select>
+          </div>
+
+          <!-- Téléversement du fichier -->
+          <div class="mt-4"></div>
+          <label for="fileInput">Sélectionner un fichier :</label>
+          <input id="fileInput" type="file" name="file" class="form-control mb-2" accept=".pdf,.xls,.xlsx" required>
+
+          <!-- Bouton d'envoi -->
           <button type="submit" class="btn btn-primary">Envoyer</button>
         </form>
       </div>
     </div>
+
     
     
 
@@ -693,27 +754,6 @@ try {
     function closeModal() {
       document.getElementById("uploadModal").style.display = "none";
     }
-  
-    document.getElementById("uploadForm").addEventListener("submit", function(event) {
-      event.preventDefault();
-  
-      let fileInput = document.getElementById("fileInput");
-      let selectedClasses = Array.from(document.querySelectorAll('input[name="classe"]:checked'))
-        .map(cb => cb.value);
-  
-      if (selectedClasses.length === 0) {
-        alert("Veuillez sélectionner au moins une classe !");
-        return;
-      }
-  
-      if (fileInput.files.length === 0) {
-        alert("Veuillez sélectionner un fichier !");
-        return;
-      }
-  
-      alert("Fichier envoyé avec succès pour les classes : " + selectedClasses.join(", "));
-      closeModal();
-    });
   </script>
 
 </body>
