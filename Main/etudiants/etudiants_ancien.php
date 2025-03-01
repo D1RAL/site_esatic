@@ -1,61 +1,13 @@
 <?php
-session_start();  // S'assurer que la session est démarrée ici
-include('../dbconnection.php'); // Connexion à la base de données
+require '../dbconnection.php'; // Inclure le fichier de connexion
 
-// Vérification si la session de l'étudiant est active
-if (!isset($_SESSION['email_etudiant'])) {
-    echo "<script>alert('Veuillez vous connecter d\'abord'); window.location.href='connexion.php';</script>";
-    exit();
-}
+// ID de l'étudiant à afficher (exemple: 1)
+$id_etudiant = 1;
 
-$email = $_SESSION['email_etudiant']; // Récupération de l'email de l'étudiant
-
-try {
-    // Récupération des informations de l'étudiant, y compris son ID de classe
-    $sql = "SELECT id, nom_etudiant, prenom_etudiant, classe_id FROM etudiants WHERE email_etudiant = :email";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(':email', $email);
-    $stmt->execute();
-    $etudiant = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-
-    if ($etudiant) {
-        $nom_etudiant = htmlspecialchars($etudiant['nom_etudiant']);
-        $prenom_etudiant = htmlspecialchars($etudiant['prenom_etudiant']);
-        $classe_id = $etudiant['classe_id']; // Récupération de l'ID de la classe de l'étudiant
-
-        // Récupération des fichiers pour cette classe
-        $sql_fichiers = "
-            SELECT f.id, f.nom_fichier, f.chemin_fichier 
-            FROM fichiers f
-            JOIN fichier_classe fc ON f.id = fc.fichier_id
-            WHERE fc.classe_id = :classe_id
-        ";
-        $stmt_fichiers = $pdo->prepare($sql_fichiers);
-        $stmt_fichiers->bindParam(':classe_id', $classe_id);
-        $stmt_fichiers->execute();
-        $fichiers = $stmt_fichiers->fetchAll(PDO::FETCH_ASSOC);
-
-        // Récupération des événements du calendrier de l'étudiant
-        $sql_calendrier = "
-        SELECT titre, description, date_calendrier, heure_debut, heure_fin 
-        FROM calendrier_etudiants 
-        WHERE etudiant_id = :etudiant_id 
-        ORDER BY date_calendrier, heure_debut
-        ";
-        $stmt_calendrier = $pdo->prepare($sql_calendrier);
-        $stmt_calendrier->bindParam(':etudiant_id', $etudiant['id']);
-        $stmt_calendrier->execute();
-        $evenements = $stmt_calendrier->fetchAll(PDO::FETCH_ASSOC);
-
-    } else {
-        echo "<script>alert('Étudiant introuvable'); window.location.href='connexion.php';</script>";
-        exit();
-    }
-} catch (PDOException $e) {
-    echo "Erreur : " . $e->getMessage();
-    exit();
-}
+// Requête SQL pour récupérer le nom de l'étudiant
+$stmt = $pdo->prepare("SELECT nom_etudiant FROM etudiants WHERE id = ?");
+$stmt->execute([$id_etudiant]);
+$etudiant = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -211,8 +163,7 @@ try {
       <ul>
         <li><a href="#hero" class="active"><i class="bi bi-house-door navicon"></i><span>Tableau de bord</span></a></li>
         <li><a href="#about"><i class="bi bi-book navicon"></i><span>Mes documents</span></a></li>
-        <li><a href="#resume"><i class="bi bi-book navicon"></i><span>Note virtuel</span></a></li>
-        <li><a href="note.php?id=<?= $etudiant['id'] ?>"><i class="bi bi-book navicon"></i><span>Mes notes</span></a></li> 
+        <li><a href="#resume"><i class="bi bi-book navicon"></i><span>Mes notes</span></a></li>
         <li><a href="#appointment"><i class="bi bi-pencil-square navicon"></i><span>Résultats</span></a></li>
         <li><a href="#"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
       </ul>
@@ -280,44 +231,15 @@ try {
             </table>
         </div>
     
+        <!-- Cours à venir -->
         <div class="mt-4">
-          <h3>Mon Calendrier</h3>
-          <?php if ($evenements): ?>
-              <ul class="list-group">
-                  <?php foreach ($evenements as $event): ?>
-                      <li class="list-group-item">
-                          <?php
-                          // Tableau des jours de la semaine en français
-                          $jours_fr = [
-                              'Monday' => 'Lundi', 
-                              'Tuesday' => 'Mardi', 
-                              'Wednesday' => 'Mercredi', 
-                              'Thursday' => 'Jeudi', 
-                              'Friday' => 'Vendredi', 
-                              'Saturday' => 'Samedi', 
-                              'Sunday' => 'Dimanche'
-                          ];
-
-                          // Récupérer le jour en anglais et le traduire en français
-                          $jour = date("l d/m", strtotime($event['date_calendrier']));
-                          $jour_fr = $jours_fr[date("l", strtotime($event['date_calendrier']))];
-
-                          // Formater la date à afficher
-                          $jour_complet = $jour_fr . ' ' . date("d/m", strtotime($event['date_calendrier']));
-                          ?>
-
-                          🕘 <?= ucfirst($jour_complet) ?> à <?= $event['heure_debut'] ?> - <strong><?= htmlspecialchars($event['titre']) ?></strong>
-                          <br><small><strong><?= htmlspecialchars($event['description']) ?></strong></small>
-                      </li>
-                  <?php endforeach; ?>
-              </ul>
-          <?php else: ?>
-              <p>Aucun événement prévu.</p>
-          <?php endif; ?>
+            <h3>Calendrier des cours à venir</h3>
+            <ul class="list-group">
+                <li class="list-group-item">🕘 Lundi 10h - Algèbre Linéaire</li>
+                <li class="list-group-item">🕒 Mercredi 14h - Réseaux Informatiques</li>
+                <li class="list-group-item">🕖 Vendredi 8h - Programmation Java</li>
+            </ul>
         </div>
-
-
-
     
         <!-- Notifications -->
         <div class="mt-4">
@@ -376,26 +298,66 @@ try {
     
           <!-- Liste des cours -->
           <div class="col-lg-10">
+            <h3>Liste des classes</h3>
             <table class="table table-striped">
               <thead>
                 <tr>
-                  <th>Nom</th>
+                  <th>Classe</th>
+                  <th>Code</th>
+                  <th>Intitulé</th>
+                  <th>Horaires</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <?php if (!empty($fichiers)): ?>
-                  <?php foreach ($fichiers as $fichier): ?>
-                    <tr>
-                      <td><?php echo htmlspecialchars($fichier['nom_fichier']); ?></td>
-                      <td>
-                        <a href="note.html" class="btn btn-danger">Telecharger</a>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                <?php else: ?>
-                  <li>Aucun fichier disponible.</li>
-                <?php endif; ?>
+                <tr>
+                  <td>SRIT2A</td>
+                  <td>INF101</td>
+                  <td>Introduction à l'informatique</td>
+                  <td>Lundi 8h - 10h</td>
+                  <td>
+                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
+                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
+                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
+                    <button class="btn btn-success">Liste de classe</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>SRIT2B</td>
+                  <td>MAT201</td>
+                  <td>Mathématiques avancées</td>
+                  <td>Mercredi 14h - 16h</td>
+                  <td>
+                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
+                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
+                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
+                    <button class="btn btn-success">Liste de classe</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>RTEL2</td>
+                  <td>MAT201</td>
+                  <td>Mathématiques avancées</td>
+                  <td>Mercredi 14h - 16h</td>
+                  <td>
+                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
+                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
+                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
+                    <button class="btn btn-success">Liste de classe</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>SIGL2</td>
+                  <td>MAT201</td>
+                  <td>Mathématiques avancées</td>
+                  <td>Mercredi 14h - 16h</td>
+                  <td>
+                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
+                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
+                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
+                    <button class="btn btn-success">Liste de classe</button>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -404,49 +366,6 @@ try {
       </div>
     
     </section>
-
-    <section id="appointment" class="appointment section light-background">
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <h2>Mon calendrier</h2>
-        <p>La fonctionnalité de prise de rendez-vous en ligne de Medicor vous permet de planifier vos consultations</p>
-      </div><!-- End Section Title -->
-
-      <!-- Formulaire HTML -->
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
-        <form method="POST" id="appointment-form" action="calendrier.php" role="form">
-          <div class="row">
-            <div class="col-md-4 form-group mt-3">
-              <label for="titre">Titre</label>
-              <input type="text" name="titre" class="form-control" required>
-            </div>
-            <div class="col-md-4 form-group mt-3">
-              <label for="description">Description :</label>
-              <input type="text" name="description" class="form-control" required>
-            </div>
-            <div class="col-md-4 form-group mt-3">
-              <label for="date"titre>Date :</label>
-              <input type="date" name="date" class="form-control" required>
-            </div>
-            <div class="col-md-4 form-group mt-3">
-              <label for="heure_debut">Heure de debut :</label>
-              <input type="time" name="heure_debut" class="form-control" required>
-            </div>
-            <div class="col-md-4 form-group mt-3">
-            <label for="heure_fin">Heure de fin :</label>
-              <input type="time" name="heure_fin" class="form-control" required>
-            </div>
-          </div>
-          <div class="mt-3">
-            <div class="text-center">
-              <button type="submit" class="btn btn-success">VALIDER</button>
-            </div>
-          </div>
-        </form>
-      </div>
-
-
-    </section> 
 
     <section id="resume" class="courses section">
 

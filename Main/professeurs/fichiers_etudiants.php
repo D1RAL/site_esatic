@@ -1,101 +1,87 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+session_start(); // Assurez-vous que la session est démarrée pour pouvoir utiliser $_SESSION
 
-session_start();
-
-// Vérifier si le professeur est connecté
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professeur') {
-    die("Erreur : Professeur non connecté.");
-}
-
-$professeur_id = $_SESSION['user_id'];  // Récupérer l'ID du professeur depuis la session
-
-// Connexion à la base de données
-try {
-    $conn = new PDO("pgsql:host=localhost;dbname=site_esatic", "samuel", "cedric225");
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die("Erreur de connexion : " . $e->getMessage());
-}
-
-// Vérifier si un fichier a été soumis
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $classes = $_POST['departments'] ?? [];
-    $fileType = htmlspecialchars($_POST['fileType'] ?? '');
-    $file = $_FILES['file'];
-
-    // Vérification des champs
-    if (empty($classes) || empty($fileType) || empty($file['name'])) {
-        die("Erreur : Tous les champs sont obligatoires !");
+    // Vérification des classes sélectionnées
+    if (isset($_POST['classes']) && count($_POST['classes']) > 0) {
+        $classes = $_POST['classes'];
+        echo "Classes sélectionnées : " . implode(", ", $classes) . "<br>";
+    } else {
+        die("Erreur : Aucune classe sélectionnée. Veuillez en sélectionner au moins une.");
     }
 
-    // Vérifier si le fichier a bien été uploadé
-    if (!is_uploaded_file($file['tmp_name'])) {
-        die("Erreur : Le fichier n'a pas été correctement uploadé.");
+    // Récupération du type de fichier
+    $fileType = $_POST['fileType'] ?? null;
+    if (!$fileType) {
+        die("Veuillez sélectionner un type de fichier.");
     }
+    echo "Type de fichier sélectionné : $fileType<br>";
 
-    // Vérification du type de fichier (PDF, XLS, XLSX)
-    $allowedTypes = ['application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-    if (!in_array($file['type'], $allowedTypes)) {
-        die("Erreur : Le fichier doit être un PDF, XLS ou XLSX.");
-    }
+    // Vérification du fichier téléchargé
+    if (isset($_FILES['file']) && $_FILES['file']['error'] == 0) {
+        $file = $_FILES['file'];
 
-    // Définir un répertoire d'upload
-    $uploadDir = 'uploads_etudiants/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0777, true);
-    }
+        // Définir un répertoire de téléchargement
+        $uploadDir = 'uploads_etudiants/';
+        $fileName = basename($file['name']);
+        $filePath = $uploadDir . $fileName;
 
-    // Créer un nom de fichier unique
-    $filename = uniqid() . '_' . basename($file['name']);
-    $filePath = $uploadDir . $filename;
+        echo "Nom du fichier : $fileName<br>";
+        echo "Chemin du fichier pour téléchargement : $filePath<br>";
 
-    // Déplacer le fichier vers le dossier "uploads_etudiants"
-    if (move_uploaded_file($file['tmp_name'], $filePath)) {
-        echo "Fichier déplacé avec succès : " . $filePath;
+        // Vérifiez si le fichier peut être déplacé vers le répertoire de téléchargement
+        if (move_uploaded_file($file['tmp_name'], $filePath)) {
+            echo "Fichier téléchargé avec succès !<br>";
 
-        try {
-            // Insérer le fichier dans la table fichiers et récupérer son ID
-            $sql = "INSERT INTO fichiers (professeur_id, type_fichier, nom_fichier, chemin_fichier) 
-                    VALUES (?, ?, ?, ?) RETURNING id";
-            $stmt = $conn->prepare($sql);
-            $stmt->execute([$professeur_id, $fileType, $filename, $filePath]);
+            try {
+                // Connexion à la base de données
+                $pdo = new PDO('pgsql:host=localhost;dbname=site_esatic', 'samuel', 'cedric225');
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            $fichier_id = $stmt->fetchColumn();
-            
-            if (!$fichier_id) {
-                die("Erreur : Impossible de récupérer l'ID du fichier inséré.");
+                // Assurez-vous que $professeur_id contient l'ID du professeur authentifié
+                $professeur_id = $_SESSION['user_id'];
+
+                // Insérer les informations du fichier dans la table "fichiers"
+                $sql = "INSERT INTO fichiers (professeur_id, type_fichier, nom_fichier, chemin_fichier) 
+                        VALUES (:professeur_id, :type_fichier, :nom_fichier, :chemin_fichier)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    ':professeur_id' => $professeur_id,
+                    ':type_fichier' => $fileType,
+                    ':nom_fichier' => $fileName,
+                    ':chemin_fichier' => $filePath
+                ]);
+
+                if ($stmt->rowCount() > 0) {
+                    $fichier_id = $pdo->lastInsertId();
+                    echo "Fichier inséré avec ID : $fichier_id<br>";
+                } else {
+                    echo "Erreur lors de l'insertion du fichier dans la base de données.<br>";
+                }
+
+                // Insérer les relations fichier-classe
+                foreach ($classes as $classe_id) {
+                    $sqlRelation = "INSERT INTO fichier_classe (fichier_id, classe_id) 
+                                    VALUES (:fichier_id, :classe_id)";
+                    $stmt = $pdo->prepare($sqlRelation);
+                    $stmt->execute([
+                        ':fichier_id' => $fichier_id,
+                        ':classe_id' => $classe_id
+                    ]);
+                }
+
+                // Message de succès et redirection vers la page des fichiers
+                $_SESSION['success_message'] = "Fichier téléchargé et classes associées avec succès.";
+                exit(); // Toujours appeler exit après header() pour s'assurer que le script s'arrête ici
+
+            } catch (PDOException $e) {
+                die("Erreur lors de l'insertion des données dans la base de données : " . $e->getMessage());
             }
-
-            // Insérer les associations fichier_classe
-            $sql = "INSERT INTO fichier_classe (fichier_id, classe_id) VALUES (?, ?)";
-            $stmt = $conn->prepare($sql);
-
-            foreach ($classes as $classe) {
-                // Assurez-vous que chaque classe existe dans la base de données avant l'insertion
-                $stmt->execute([$fichier_id, $classe]);
-            }
-
-            // Afficher le message de succès
-            echo "<div class='overlay'>
-                    <div class='loader'></div>
-                    <p class='message'>Fichier envoyé avec succès ✅</p>
-                  </div>
-                  <script>
-                      setTimeout(() => {
-                          window.location.href='professeurs.php';
-                      }, 3000);
-                  </script>";
-
-        } catch (PDOException $e) {
-            die("Erreur SQL : " . $e->getMessage());
+        } else {
+            die("Erreur lors du téléchargement du fichier.");
         }
     } else {
-        die("Erreur lors du déplacement du fichier.");
+        die("Aucun fichier téléchargé ou erreur dans le téléchargement.");
     }
-} else {
-    die("Erreur : La méthode de requête n'est pas POST.");
 }
 ?>

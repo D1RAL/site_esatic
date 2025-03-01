@@ -1,3 +1,46 @@
+<?php
+session_start();
+include('../dbconnection.php'); 
+
+// Vérification de la session
+if (!isset($_SESSION['email_etudiant'])) {
+    echo "<script>alert('Veuillez vous connecter d\'abord'); window.location.href='connexion.php';</script>";
+    exit();
+}
+
+// Récupérer l'ID de l'étudiant depuis l'URL
+$etudiant_id = $_GET['id'] ?? null;
+
+if (!$etudiant_id) {
+    echo "<script>alert('Identifiant étudiant manquant !'); window.location.href='etudiants.php';</script>";
+    exit();
+}
+
+try {
+    // Récupérer les notes de l'étudiant
+    $sql = "
+        SELECT 
+            m.nom_matiere, 
+            e.type_evaluation, 
+            n.note
+        FROM notes n
+        JOIN evaluations e ON n.evaluation_id = e.id
+        JOIN matieres m ON e.matiere_id = m.id
+        WHERE n.etudiant_id = :etudiant_id
+        ORDER BY m.nom_matiere, e.type_evaluation
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':etudiant_id', $etudiant_id, PDO::PARAM_INT);
+    $stmt->execute();
+    $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (PDOException $e) {
+    echo "Erreur : " . $e->getMessage();
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -123,11 +166,11 @@
     <nav id="navmenu" class="navmenu">
       <ul>
         <li><a href="#hero" class="active"><i class="bi bi-house-door navicon"></i><span>Tableau de bord</span></a></li>
-        <li><a href="#about"><i class="bi bi-book navicon"></i><span>Mes classes</span></a></li>
-        <li><a href="#resume"><i class="bi bi-pencil-square navicon"></i><span>Gestion des notes</span></a></li>
-        <li><a href="#portfolio"><i class="bi bi-calendar navicon"></i><span>Emploi du temps</span></a></li>
-        
-        
+        <li><a href="#about"><i class="bi bi-book navicon"></i><span>Mes documents</span></a></li>
+        <li><a href="#resume"><i class="bi bi-book navicon"></i><span>Note virtuel</span></a></li>
+        <li><a href="note.php?id=<?= $etudiant['id'] ?>"><i class="bi bi-book navicon"></i><span>Mes notes</span></a></li> 
+        <li><a href="#appointment"><i class="bi bi-pencil-square navicon"></i><span>Résultats</span></a></li>
+        <li><a href="#"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
       </ul>
     </nav>
 
@@ -161,32 +204,24 @@
             <p class="fst-italic py-3">
               Les enseignants peuvent ajouter des notes pour chaque étudiant d'une classe et calculer la moyenne générale.
             </p>
-            
-            <table style="width: 100%">
-              <thead>
+            <?php if ($notes): ?>
+              <table border="1">
                 <tr>
-                    <th style="width: 10%">Nom</th>
-                    <th style="width: 10%">Note 1</th>
-                    <th style="width: 10%">Note 2</th>
-                    <th style="width: 10%">Note 3</th>
-                    <th style="width: 10%">Note 4</th>
-                    <th style="width: 10%">Note d'examen </th>
+                  <th>Matière</th>
+                  <th>Type d'évaluation</th>
+                  <th>Note</th>
                 </tr>
-              </thead>
-              <tbody>
-                <script>
-                  let noms = ["Alice", "Bob", "Charlie", "David", "Emma", "François", "Gabriel", "Hugo", "Isabelle", "Jean", "Karim", "Laura", "Mariam", "Nicolas", "Olivia", "Paul", "Quentin", "Raphaël", "Sophie", "Thomas", "Ulysse", "Victor", "William", "Xavier", "Yasmine", "Zoé", "Antoine", "Bernard", "Catherine", "Dominique"];
-                  for (let i = 0; i < 30; i++) {
-                      document.write('<tr>');
-                      document.write(`<td>${noms[i]}</td>`);
-                      for (let j = 0; j < 5; j++) {
-                          document.write('<td><input type="text" style="width: 100%"></td>');
-                      }
-                      document.write('</tr>');
-                  }
-                </script>
-              </tbody>
-            </table>
+                <?php foreach ($notes as $note): ?>
+                  <tr>
+                    <td><?= htmlspecialchars($note['nom_matiere']) ?></td>
+                    <td><?= htmlspecialchars($note['type_evaluation']) ?></td>
+                    <td><?= htmlspecialchars($note['note']) ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </table>
+            <?php else: ?>
+                <p>Aucune note disponible.</p>
+            <?php endif; ?>
           </div>
         </div>
     

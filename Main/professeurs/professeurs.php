@@ -372,42 +372,32 @@ $files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
         <form id="uploadForm" method="POST" action="fichiers_etudiants.php" enctype="multipart/form-data">
           <div class="col-md-4 form-group mt-3">
             <label>Sélectionnez les classes :</label>
-            <?php
-              // Afficher dynamiquement les classes enseignées par le professeur
-              foreach ($data as $classe => $matieres) {
-                // Récupérer l'ID de la classe
-                $query_id_classe = "SELECT id FROM classes WHERE nom_classe = ?";
-                $stmt_id_classe = $conn->prepare($query_id_classe);
-                $stmt_id_classe->execute([$classe]);
-                $classe_id = $stmt_id_classe->fetchColumn();
-
-                if ($classe_id) {
-                  echo "<div class='form-check'>";
-                  echo "<input type='checkbox' name='departments[]' value='" . htmlspecialchars($classe_id) . "' class='form-check-input'>";
-                  echo "<label class='form-check-label'>" . htmlspecialchars($classe) . "</label>";
-                  echo "</div>";
-                }
-              }
-            ?>
+            <!-- Affichage des classes -->
+            <?php if (!empty($data)) : ?>
+              <?php foreach ($data as $classe_id => $info) : ?>
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="classe_<?= $classe_id ?>" name="classes[]" value="<?= $classe_id ?>">
+                  <label class="form-check-label" for="classe_<?= $classe_id ?>">
+                      <?= htmlspecialchars($info['nom_classe']) ?>
+                  </label>
+                </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </div>
-
-
           <div class="form-group mt-3">
-            <label for="fileType">Type de fichier :</label>
-            <select name="fileType" id="fileType" class="form-control">
-              <option value="TD">TD</option>
-              <option value="Cours">Cours</option>
-              <option value="Exercice">Exercice</option>
-            </select>
+              <label for="fileType">Type de fichier :</label>
+              <select name="fileType" id="fileType" class="form-control">
+                  <option value="TD">TD</option>
+                  <option value="Cours">Cours</option>
+                  <option value="Exercice">Exercice</option>
+              </select>
           </div>
-
           <div class="mt-4"></div>
-
           <input id="fileInput" type="file" name="file" class="form-control mb-2" accept=".pdf,.xls,.xlsx" required>
-          
           <button type="submit" class="btn btn-primary">Envoyer</button>
         </form>
       </div>
+
     </div>
 
     <section id="appointment" class="appointment section light-background">
@@ -513,78 +503,17 @@ $files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
   <!-- Main JS File -->
   <script src="../assets/js/main.js"></script>
 
-  <!-- Script pour gérer l'upload -->
-  <script>
-    document.getElementById('uploadForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-
-      let fileInput = document.getElementById('fileInput');
-      if (fileInput.files.length === 0) {
-        alert("Veuillez sélectionner un fichier à téléverser.");
-        return;
-      }
-
-      let formData = new FormData(this); // Récupérer tout le formulaire
-
-      // Envoi du formulaire avec le fichier et les autres données
-      fetch('fichiers_etudiants.php', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.text())
-      .then(data => alert("Fichier téléversé avec succès !"))
-      .catch(error => console.error("Erreur lors du téléversement :", error));
-    });
-
-  </script>
-
   <script>
     // Fonction pour ouvrir la modale et mettre à jour le titre
     function openModal() {
-        document.getElementById("uploadModal").style.display = "block";
-        changeModalTitle(); // Met à jour le titre dès l'ouverture de la modale
+      document.getElementById("uploadModal").style.display = "block";
+      changeModalTitle(); // Met à jour le titre dès l'ouverture de la modale
     }
 
     // Fonction pour fermer la modale
     function closeModal() {
-        document.getElementById("uploadModal").style.display = "none";
+      document.getElementById("uploadModal").style.display = "none";
     }
-
-    // Fonction pour changer le titre de la modale en fonction du type de fichier
-    function changeModalTitle() {
-        const fileType = document.getElementById("fileType").value;
-        const modalTitle = document.getElementById("modalTitle");
-
-        if (fileType === 'TD') {
-            modalTitle.innerText = "Téléverser un TD";
-        } else if (fileType === 'Cours') {
-            modalTitle.innerText = "Téléverser un cours";
-        } else if (fileType === 'Exercice') {
-            modalTitle.innerText = "Téléverser un exercice";
-        }
-    }
-
-    // Gestion du formulaire de téléchargement
-    document.getElementById("uploadForm").addEventListener("submit", function(event) {
-        event.preventDefault();
-
-        let fileInput = document.getElementById("fileInput");
-        let selectedClasses = Array.from(document.querySelectorAll('input[name="departments[]"]:checked'))
-            .map(cb => cb.value);
-
-        if (selectedClasses.length === 0) {
-            alert("Veuillez sélectionner au moins une classe !");
-            return;
-        }
-
-        if (fileInput.files.length === 0) {
-            alert("Veuillez sélectionner un fichier !");
-            return;
-        }
-
-        alert("Fichier envoyé avec succès pour les classes : " + selectedClasses.join(", "));
-        closeModal();
-    });
   </script>
 </body>
 
