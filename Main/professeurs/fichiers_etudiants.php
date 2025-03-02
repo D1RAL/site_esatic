@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $file = $_FILES['file'];
 
         // Définir un répertoire de téléchargement
-        $uploadDir = 'uploads_etudiants/';
+        $uploadDir = '../uploads_etudiants/';
         $fileName = basename($file['name']);
         $filePath = $uploadDir . $fileName;
 

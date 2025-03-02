@@ -180,11 +180,11 @@ try {
 
     <nav id="navmenu" class="navmenu">
       <ul>
-        <li><a href="#hero" class="active"><i class="bi bi-house-door navicon"></i><span>Tableau de bord</span></a></li>
-        <li><a href="#about"><i class="bi bi-book navicon"></i><span>Mes documents</span></a></li>
-        <li><a href="#resume"><i class="bi bi-book navicon"></i><span>Note virtuel</span></a></li>
+        <li><a href="etudiants.php#hero" class="active"><i class="bi bi-house-door navicon"></i><span>Tableau de bord</span></a></li>
+        <li><a href="etudiants.php#about"><i class="bi bi-book navicon"></i><span>Mes documents</span></a></li>
+        <li><a href="etudiants.php#resume"><i class="bi bi-book navicon"></i><span>Note virtuel</span></a></li>
         <li><a href="note.php?id=<?= $etudiant['id'] ?>"><i class="bi bi-book navicon"></i><span>Mes notes</span></a></li> 
-        <li><a href="#appointment"><i class="bi bi-pencil-square navicon"></i><span>Résultats</span></a></li>
+        <li><a href="etudiants.php#appointment"><i class="bi bi-pencil-square navicon"></i><span>Résultats</span></a></li>
         <li><a href="#"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
       </ul>
     </nav>
@@ -196,7 +196,7 @@ try {
     <div class="content" id="hero">
       <div class="container mt-4">
         <header class="mb-4">
-            <h1 class="text-center">Bienvenue, <?= htmlspecialchars($nom_etudiant['nom_etudiant']); ?></h1>
+            <h1 class="text-center">Bienvenue, <?= htmlspecialchars($nom_etudiant[0]['nom_etudiant']); ?></h1>
         </header>
       </div>
     </div>

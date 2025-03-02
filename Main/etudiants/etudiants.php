@@ -81,9 +81,30 @@ try {
         $stmt_classes->execute();
         $classes = $stmt_classes->fetchAll(PDO::FETCH_ASSOC);
 
+        $stmt_fichier_etudiants = $pdo->prepare("
+            SELECT 
+                f.id, 
+                f.nom_fichier, 
+                f.chemin_fichier, 
+                f.type_fichier,
+                f.date_upload,
+                af.est_accepte, 
+                e.prenom_etudiant, 
+                e.nom_etudiant, 
+                c.nom_classe
+            FROM fichiers_etudiants f
+            INNER JOIN fichier_classe_etudiant fce ON f.id = fce.fichier_id
+            LEFT JOIN autorisation_fichier af ON f.id = af.fichier_id AND af.etudiant_id = ?
+            INNER JOIN etudiants e ON f.etudiant_id = e.id
+            INNER JOIN classes c ON e.classe_id = c.id
+            WHERE fce.classe_id = ?
+        ");
+
+        $stmt_fichier_etudiants->execute([$etudiant_id, $classe_id]);
+        $files_etudiants = $stmt_fichier_etudiants->fetchAll();
     } else {
-        echo "<script>alert('Étudiant introuvable'); window.location.href='connexion.php';</script>";
-        exit();
+      echo "<script>alert('Étudiant introuvable'); window.location.href='connexion.php';</script>";
+      exit();
     }
 } catch (PDOException $e) {
     echo "Erreur : " . $e->getMessage();
@@ -116,6 +137,9 @@ try {
   <link href="../assets/vendor/aos/aos.css" rel="stylesheet">
   <link href="../assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
   <link href="../assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
+
 
   <!-- Main CSS File -->
   <link href="../assets/css/main.css" rel="stylesheet">
@@ -280,35 +304,42 @@ try {
             <h3 class="text-center">Progression des cours donnés</h3>
             <canvas id="statsChart"></canvas>
         </div>
-    
+
         <!-- Derniers fichiers téléversés -->
         <div class="mt-4">
             <h3>Derniers fichiers téléversés</h3>
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Nom du fichier</th>
+                        <th>Nom de l'etudiant</th>
                         <th>Classe</th>
                         <th>Type</th>
                         <th>Date</th>
                         <th>Téléchargement</th>
+                        <th>Decision</th>
                     </tr>
                 </thead>
+                
                 <tbody>
+                  <?php foreach ($files_etudiants as $file_etudiant) : ?>
                     <tr>
-                        <td>cours_informatique.pdf</td>
-                        <td>SRIT2A</td>
-                        <td>Cours</td>
-                        <td>16/02/2025</td>
-                        <td><button class="btn btn-sm btn-primary">📥 Télécharger</button></td>
+                      <td><?= htmlspecialchars($file_etudiant['prenom_etudiant'] . ' ' . $file_etudiant['nom_etudiant']) ?></td>
+                      <td><?= htmlspecialchars($file_etudiant['nom_classe']) ?></td>
+                      <td><?= htmlspecialchars($file_etudiant['type_fichier']) ?></td>
+                      <td><?= htmlspecialchars($file_etudiant['date_upload']) ?></td>
+                      <td><a class="btn btn-sm btn-primary" href="<?= htmlspecialchars($file_etudiant['chemin_fichier']) ?>" target="_blank">📥 Télécharger</a></td>
+                      <td>
+                        <?php if (!$file_etudiant['est_accepte']) : ?>
+                          <form method="POST" action="acceptation_fichier.php">
+                              <input type="hidden" name="fichier_id" value="<?= $file_etudiant['id'] ?>">
+                              <button type="submit" class="btn btn-primary">Accepter le fichier</button>
+                          </form>
+                        <?php else : ?>
+                            <span>Vous avez accepté ce fichier.</span>
+                        <?php endif; ?>
+                      </td>
                     </tr>
-                    <tr>
-                        <td>TD_math.xlsx</td>
-                        <td>SRIT2B</td>
-                        <td>TD</td>
-                        <td>15/02/2025</td>
-                        <td><button class="btn btn-sm btn-primary">📥 Télécharger</button></td>
-                    </tr>
+                  <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
@@ -348,7 +379,6 @@ try {
               <p>Aucun événement prévu.</p>
           <?php endif; ?>
         </div>
-
 
 
     
@@ -427,7 +457,7 @@ try {
                       <td><?php echo htmlspecialchars($fichier['type_fichier']); ?></td>
                       <td><?php echo htmlspecialchars($fichier['nom_professeur']) . ' ' . htmlspecialchars($fichier['prenom_professeur']); ?></td>
                       <td>
-                        <a href="note.html" class="btn btn-danger">Telecharger</a>
+                        <a href="telecharger_fichier.php?id=<?php echo $fichier['id']; ?>" class="btn btn-danger">Télécharger</a>
                       </td>
                     </tr>
                   <?php endforeach; ?>
@@ -442,6 +472,9 @@ try {
       </div>
     
     </section>
+
+    
+
 
     <section id="appointment" class="appointment section light-background">
       <!-- Section Title -->
@@ -502,10 +535,10 @@ try {
             <h2>Gestion des notes</h2>
 
             <div class="mb-3">
-              <label for="subjectSelect" class="form-label">Sélectionner une matière</label>
+              <label for="subjectSelect" class="form-label">Sélectionner une matière </label>
               <select id="subjectSelect" class="form-control">
                 <?php foreach($matiere_classe as $matiere): ?>
-                  <option value="<?= htmlspecialchars($matiere['nom_matiere']); ?>"> <?= htmlspecialchars($matiere['nom_matiere']); ?> </option>
+                  <option value="<?= htmlspecialchars($matiere['nom_matiere']); ?>"> <?= htmlspecialchars($matiere['nom_matiere']);  ?> </option>
                 <?php endforeach; ?>
               </select>
           </div>
@@ -718,30 +751,6 @@ try {
     if (moyenne) {
       document.getElementById('moyenne').innerText = moyenne;
     }
-  </script>
-
-  <!-- Script pour gérer l'upload -->
-  <script>
-    document.getElementById('uploadForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-      
-      let fileInput = document.getElementById('fileInput');
-      if (fileInput.files.length === 0) {
-        alert("Veuillez sélectionner un fichier samuel à téléverser.");
-        return;
-      }
-
-      let formData = new FormData();
-      formData.append("emploiDuTemps", fileInput.files[0]);
-
-      fetch('/upload_emploi_du_temps', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.text())
-      .then(data => alert("Fichier téléversé avec succès !"))
-      .catch(error => console.error("Erreur lors du téléversement :", error));
-    });
   </script>
 
   <!-- JavaScript pour gérer l'affichage de la fenêtre modale -->
