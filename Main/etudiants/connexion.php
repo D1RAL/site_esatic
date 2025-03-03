@@ -34,11 +34,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             if ($user && password_verify($password, $user[$password_column])) {
                 $_SESSION['user_id'] = $user['id'];
-                $_SESSION['email'] = $email;
+                $_SESSION['email_etudiant'] = $email;  // Remplacer par 'email_etudiant' pour l'étudiant
                 $_SESSION['role'] = $role;
-                echo "<script>window.location.href='etudiants.php';</script>";
+                
+                // Redirection conditionnelle après connexion
+                if ($role == 'professeur') {
+                    echo "<script>window.location.href='../professeurs/connexion.php';</script>";
+                } else {
+                    echo "<script>window.location.href='etudiants.php';</script>";
+                }
                 exit();
             } else {
+                // Afficher l'alerte avant redirection
                 echo "<script>alert('Email ou mot de passe incorrect');</script>";
             }
         }

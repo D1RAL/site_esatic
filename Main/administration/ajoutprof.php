@@ -2,8 +2,8 @@
 // Connexion à la base
 $host = 'localhost';
 $dbname = 'site_esatic';
-$user = 'postgres';
-$password = 'admin';
+$user = 'samuel';
+$password = 'cedric225';
 
 $conn = new PDO("pgsql:host=$host;dbname=$dbname", $user, $password);
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

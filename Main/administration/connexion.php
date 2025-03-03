@@ -6,8 +6,8 @@ $error_message = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $dsn = "pgsql:host=localhost;dbname=site_esatic";
-    $username = "postgres";
-    $password_db = "admin";
+    $username = "samuel";
+    $password_db = "cedric225";
 
     try {
         $connexion = new PDO($dsn, $username, $password_db);

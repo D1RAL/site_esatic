@@ -1,4 +1,4 @@
-<?php
+<?php 
 // Connexion à la base
 $host = 'localhost';
 $dbname = 'site_esatic';
@@ -8,32 +8,39 @@ $password = 'cedric225';
 $conn = new PDO("pgsql:host=$host;dbname=$dbname", $user, $password);
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$classes = $conn->query("SELECT id, nom_classe FROM classes")->fetchAll(PDO::FETCH_ASSOC);
+// Récupérer la liste des professeurs
+$professeurs = $conn->query("SELECT id, nom_professeur, prenom_professeur FROM professeurs")->fetchAll(PDO::FETCH_ASSOC);
 
+// Vérifier si un fichier a été soumis
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $classe_id = htmlspecialchars($_POST['classe'] ?? '');
-    $file = $_FILES['emploi_pdf'];
+    $professeur_id = htmlspecialchars($_POST['professeur'] ?? '');
+    $file = $_FILES['fichier_pdf'];
 
-    if (empty($classe_id) || empty($file)) {
+    // Vérification des champs
+    if (empty($professeur_id) || empty($file['name'])) {
         die("Erreur : Tous les champs sont obligatoires !");
     }
 
+    // Vérifier le type de fichier
     if ($file['type'] !== 'application/pdf') {
         die("Erreur : Seuls les fichiers PDF sont acceptés !");
     }
 
+    // Créer un nom de fichier unique
     $filename = uniqid() . '_' . basename($file['name']);
-    $path = 'uploads/' . $filename;
+    $path = 'uploads_prof/' . $filename;
 
+    // Déplacer le fichier vers le dossier "uploads_prof"
     if (move_uploaded_file($file['tmp_name'], $path)) {
         try {
-            $sql = "INSERT INTO emploi_du_temps (fichier_pdf, classe_id) VALUES (?, ?)";
+            // Insérer le fichier dans la base de données associé au professeur
+            $sql = "INSERT INTO fichier_prof (fichier_pdf, professeur_id) VALUES (?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$path, $classe_id]);
+            $stmt->execute([$path, $professeur_id]);
 
             echo "<div class='overlay'>
                     <div class='loader'></div>
-                    <p class='message'>Emploi du temps envoyé avec succès ✅</p>
+                    <p class='message'>Fichier envoyé avec succès ✅</p>
                   </div>
                   <script>
                       setTimeout(() => {
@@ -49,12 +56,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Emploi du Temps</title>
+    <title>Upload Fichier professeur</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .overlay {
@@ -98,23 +106,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
 <div class="container">
     <div class="header">
-        <h1>Upload Emploi du Temps</h1>
+        <h1>Upload Fichier Professeur</h1>
         <p>ESATIC - École Supérieure Africaine des TIC</p>
     </div>
 
     <form method="POST" action="" enctype="multipart/form-data">
         <div class="input-group">
-            <label>Classe :</label>
-            <select name="classe" required>
-                <option value="">Sélectionnez la classe</option>
-                <?php foreach ($classes as $classe) { ?>
-                    <option value="<?php echo $classe['id']; ?>"><?php echo $classe['nom_classe']; ?></option>
+            <label>Professeur :</label>
+            <select name="professeur" required>
+                <option value="">Sélectionnez un professeur</option>
+                <?php foreach ($professeurs as $professeur) { ?>
+                    <option value="<?php echo $professeur['id']; ?>">
+                        <?php echo $professeur['nom_professeur'] . ' ' . $professeur['prenom_professeur']; ?>
+                    </option>
                 <?php } ?>
             </select>
         </div>
         <div class="input-group">
             <label>Fichier PDF :</label>
-            <input type="file" name="emploi_pdf" accept=".pdf" required>
+            <input type="file" name="fichier_pdf" accept=".pdf" required>
         </div>
         <button type="submit" class="submit-btn">Uploader</button>
     </form>

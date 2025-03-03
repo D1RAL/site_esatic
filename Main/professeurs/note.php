@@ -1,3 +1,31 @@
+<?php
+// Démarrer la session pour récupérer les paramètres de la session
+session_start();
+
+// Connexion à la base de données
+$pdo = new PDO('pgsql:host=localhost;dbname=site_esatic', 'samuel', 'cedric225');
+
+// Vérifier si les paramètres sont dans l'URL ou dans la session
+$classe_id = isset($_GET['classe_id']) ? $_GET['classe_id'] : (isset($_SESSION['classe_id']) ? $_SESSION['classe_id'] : null);
+$matiere_id = isset($_GET['matiere_id']) ? $_GET['matiere_id'] : (isset($_SESSION['matiere_id']) ? $_SESSION['matiere_id'] : null);
+
+// Vérifier si les paramètres sont valides
+if ($classe_id && $matiere_id) {
+    // Récupérer les étudiants de cette classe
+    $stmt = $pdo->prepare('SELECT * FROM etudiants WHERE classe_id = :classe_id');
+    $stmt->execute(['classe_id' => $classe_id]);
+    $etudiants = $stmt->fetchAll();
+
+    // Récupérer la matière spécifique
+    $stmt_matiere = $pdo->prepare('SELECT * FROM matieres WHERE id = :matiere_id');
+    $stmt_matiere->execute(['matiere_id' => $matiere_id]);
+    $matiere = $stmt_matiere->fetch();
+} else {
+    echo "Classe ou matière non trouvée.";
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -162,31 +190,39 @@
               Les enseignants peuvent ajouter des notes pour chaque étudiant d'une classe et calculer la moyenne générale.
             </p>
             
-            <table style="width: 100%">
-              <thead>
-                <tr>
-                    <th style="width: 10%">Nom</th>
-                    <th style="width: 10%">Note 1</th>
-                    <th style="width: 10%">Note 2</th>
-                    <th style="width: 10%">Note 3</th>
-                    <th style="width: 10%">Note 4</th>
-                    <th style="width: 10%">Note d'examen </th>
-                </tr>
-              </thead>
-              <tbody>
-                <script>
-                  let noms = ["Alice", "Bob", "Charlie", "David", "Emma", "François", "Gabriel", "Hugo", "Isabelle", "Jean", "Karim", "Laura", "Mariam", "Nicolas", "Olivia", "Paul", "Quentin", "Raphaël", "Sophie", "Thomas", "Ulysse", "Victor", "William", "Xavier", "Yasmine", "Zoé", "Antoine", "Bernard", "Catherine", "Dominique"];
-                  for (let i = 0; i < 30; i++) {
-                      document.write('<tr>');
-                      document.write(`<td>${noms[i]}</td>`);
-                      for (let j = 0; j < 5; j++) {
-                          document.write('<td><input type="text" style="width: 100%"></td>');
-                      }
-                      document.write('</tr>');
-                  }
-                </script>
-              </tbody>
-            </table>
+            <form action="enregistrer_notes.php" method="POST">
+              <input type="hidden" name="classe_id" value="<?= $classe_id ?>">
+              <input type="hidden" name="matiere_id" value="<?= $matiere_id ?>">
+
+              <!-- Sélecteur de type de note -->
+              <label for="type_evaluation">Type d'évaluation :</label>
+              <select name="type_evaluation" id="type_evaluation">
+                  <option value="CC">Contrôle Continu (CC)</option>
+                  <option value="Examen">Examen</option>
+              </select>
+
+              <table style="width: 100%">
+                  <thead>
+                      <tr>
+                          <th style="width: 10%">Nom</th>
+                          <th style="width: 10%">Note</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <?php foreach ($etudiants as $etudiant): ?>
+                          <tr>
+                              <td><?= htmlspecialchars($etudiant['prenom_etudiant'] . ' ' . $etudiant['nom_etudiant']) ?></td>
+                              <td>
+                                  <input type="number" name="note_<?= $etudiant['id'] ?>" min="0" max="20" step="0.1" />
+                              </td>
+                          </tr>
+                      <?php endforeach; ?>
+                  </tbody>
+              </table>
+
+              <button type="submit" class="btn btn-primary">Enregistrer les notes</button>
+            </form>
+
           </div>
         </div>
     
