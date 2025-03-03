@@ -311,7 +311,7 @@ if (isset($_SESSION['admin_email'])) {
       <div class="d-flex justify-content-center mt-4">
     <button class="btn btn-primary mx-2" onclick="window.location.href='ajoutprof.php'">Ajouter un professeur</button>
     <button class="btn btn-primary mx-2" onclick="window.location.href='modifprof.php'">Modifier/Supprimer un professeur</button>
-    <button class="btn btn-primary mx-2">Uploader l'emploi du temps</button>
+    <button class="btn btn-primary mx-2" onclick="window.location.href='uploadprogram_prof.php'">Uploader l'emploi du temps</button>
     <button class="btn btn-primary mx-2" onclick="window.location.href='telecharge_professeurs.php'">Voir les professeurs</button>
 </div>
 
