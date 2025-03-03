@@ -7,7 +7,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (!empty($nom) && !empty($prenom) && !empty($email) && !empty($password)) {
         try {
-            $conn = new PDO("pgsql:host=localhost;dbname=site_esatic", "postgres", "admin");
+            $conn = new PDO("pgsql:host=localhost;dbname=site_esatic", "samuel", "cedric225");
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);

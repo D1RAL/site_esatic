@@ -1,3 +1,86 @@
+<?php
+session_start();
+
+// Vérifier si l'utilisateur est connecté et si son rôle est 'professeur'
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professeur') {
+    die("Erreur : Vous devez être connecté en tant que professeur pour accéder à cette page.");
+}
+
+$professeur_id = $_SESSION['user_id']; // ID du professeur depuis la session
+
+// Connexion à la base de données
+$host = 'localhost';
+$dbname = 'site_esatic';
+$user = 'samuel';
+$password = 'cedric225';
+
+try {
+    $conn = new PDO("pgsql:host=$host;dbname=$dbname", $user, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Erreur de connexion : " . $e->getMessage());
+}
+
+// Récupérer les informations du professeur
+$query_professeur = "SELECT nom_professeur, prenom_professeur FROM professeurs WHERE id = ?";
+$stmt_professeur = $conn->prepare($query_professeur);
+$stmt_professeur->execute([$professeur_id]);
+$professeur = $stmt_professeur->fetch(PDO::FETCH_ASSOC);
+
+// Vérification si aucun professeur trouvé
+if (!$professeur) {
+    die("Erreur : Aucun professeur trouvé avec l'ID " . htmlspecialchars($professeur_id));
+}
+
+// Récupérer les classes et matières enseignées par le professeur
+$query = "
+    SELECT cl.id AS classe_id, cl.nom_classe, m.id AS matiere_id, m.nom_matiere
+    FROM professeur_classe_matiere pcm
+    JOIN classes cl ON pcm.classe_id = cl.id
+    JOIN matieres m ON pcm.matiere_id = m.id
+    WHERE pcm.professeur_id = ?
+";
+
+$stmt = $conn->prepare($query);
+$stmt->execute([$professeur_id]);
+$classes_matieres = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Organisation des données pour un affichage structuré
+$data = [];
+foreach ($classes_matieres as $row) {
+    $classe_id = $row['classe_id'];
+    $classe = $row['nom_classe'];
+    $matiere_id = $row['matiere_id'];
+    $matiere_nom = $row['nom_matiere'];
+
+    if (!isset($data[$classe_id])) {
+        $data[$classe_id] = [
+            'nom_classe' => $classe,
+            'matieres' => []
+        ];
+    }
+
+    // Stocke l'ID et le nom de la matière
+    $data[$classe_id]['matieres'][] = [
+        'id' => $matiere_id,
+        'nom' => $matiere_nom
+    ];
+}
+
+// Récupérer les fichiers uploadés pour ce professeur depuis la table fichier_prof
+$query_files = "
+    SELECT fp.fichier_pdf, fp.date_telechargement
+    FROM fichier_prof fp
+    WHERE fp.professeur_id = ?
+";
+$stmt_files = $conn->prepare($query_files);
+$stmt_files->execute([$professeur_id]);
+$files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
+?>
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,7 +93,7 @@
 
   <!-- Favicons -->
   <link href="../assets/img/favicon.png" rel="icon">
-  <link href="./assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+  <link href="../assets/img/apple-touch-icon.png" rel="apple-touch-icon">
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -122,7 +205,7 @@
         <li><a href="#hero" class="active"><i class="bi bi-house-door navicon"></i><span>Tableau de bord</span></a></li>
         <li><a href="#about"><i class="bi bi-book navicon"></i><span>Mes classes</span></a></li>
         <li><a href="#appointment"><i class="bi bi-pencil-square navicon"></i><span>Rattrapage</span></a></li>
-        <li><a href="#"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
+        <li><a href="logout.php"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
       </ul>
     </nav>
 
@@ -132,7 +215,7 @@
     <div class="content" id="hero">
       <div class="container mt-4">
         <header class="mb-4">
-            <h1 class="text-center">Bienvenue, Professeur Goli</h1>
+            <h1 class="text-center"><?= "Bienvenue, " . htmlspecialchars($professeur['prenom_professeur']) . " " . htmlspecialchars($professeur['nom_professeur']) . " !"; ?></h1>
         </header>
     
         <!-- Widgets -->
@@ -153,35 +236,30 @@
             <h3 class="text-center">Progression des cours donnés</h3>
             <canvas id="statsChart"></canvas>
         </div>
-    
+
         <!-- Derniers fichiers téléversés -->
         <div class="mt-4">
-            <h3>Derniers fichiers téléversés</h3>
+            <h3>Fichiers recus</h3>
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Nom du fichier</th>
-                        <th>Classe</th>
-                        <th>Type</th>
-                        <th>Date</th>
-                        <th>Téléchargement</th>
+                      <th>Nom du fichier</th>
+                      <th>Expediteur</th>
+                      <th>Date</th>
+                      <th>Téléchargement</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>cours_informatique.pdf</td>
-                        <td>SRIT2A</td>
-                        <td>Cours</td>
-                        <td>16/02/2025</td>
-                        <td><button class="btn btn-sm btn-primary">📥 Télécharger</button></td>
-                    </tr>
-                    <tr>
-                        <td>TD_math.xlsx</td>
-                        <td>SRIT2B</td>
-                        <td>TD</td>
-                        <td>15/02/2025</td>
-                        <td><button class="btn btn-sm btn-primary">📥 Télécharger</button></td>
-                    </tr>
+                  <?php if (!empty($files)) : ?>
+                    <?php foreach ($files as $file) : ?>
+                      <tr>
+                        <td><?= htmlspecialchars($file['fichier_pdf']) ?></td>
+                        <td>Administration</td> 
+                        <td><?= htmlspecialchars($file['date_telechargement']) ?></td>
+                        <td><a href="telecharger_fichier.php?file=<?= urlencode($file['fichier_pdf']) ?>" class="btn btn-sm btn-primary">📥 Télécharger</a></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -251,40 +329,28 @@
       <div class="container" data-aos="fade-up" data-aos-delay="100">
         <div class="row gy-4 justify-content-center">
     
-          <!-- Vue mobile en cartes -->
+          <!-- Affichage des classes et matières -->
           <div class="col-lg-10 mobile-list">
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">SRIT2A</h5>
+            <?php if (!empty($data)) : ?>
+              <?php foreach ($data as $classe_id => $info) : ?>
+                <div class="card mb-3">
+                  <div class="card-body">
+                    <h5 class="card-title"><?= htmlspecialchars($info['nom_classe']) ?></h5>
                     <p><strong>Code :</strong> INF101</p>
-                    <p><strong>Intitulé :</strong> Introduction à l'informatique</p>
-                    <p><strong>Horaires :</strong> Lundi 8h - 10h</p>
+                    <p><strong>Intitulés :</strong> <?= htmlspecialchars(implode(', ', array_column($info['matieres'], 'nom'))) ?></p>
                     <div class="d-flex flex-wrap gap-2">
-                        <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
-                        <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
-                        <a href="note.html" class="btn btn-danger">Saisir Notes</a>
-                        <button class="btn btn-success">Liste de classe</button>
+                      <button class="btn btn-success" onclick="openModal()">Ajouter Documents</button>
+                      <?php foreach ($info['matieres'] as $matiere) : ?>
+                        <a href="note.php?classe_id=<?= $classe_id ?>&matiere_id=<?= $matiere['id'] ?>" class="btn btn-danger">Saisir Notes</a>
+                      <?php endforeach; ?>
+                      <a href="liste_etudiants.php?classe_id=<?= $classe_id ?>" class="btn btn-warning">Liste de classe</a>
                     </div>
+                  </div>
                 </div>
-            </div>
-    
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">SRIT2B</h5>
-                    <p><strong>Code :</strong> MAT201</p>
-                    <p><strong>Intitulé :</strong> Mathématiques avancées</p>
-                    <p><strong>Horaires :</strong> Mercredi 14h - 16h</p>
-                    <div class="d-flex flex-wrap gap-2">
-                        <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
-                        <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
-                        <a href="note.html" class="btn btn-danger">Saisir Notes</a>
-                        <button class="btn btn-success">Liste de classe</button>
-                    </div>
-                </div>
-            </div>
-    
+              <?php endforeach; ?>
+            <?php endif; ?>
           </div>
-    
+
         </div>
       </div>
     
@@ -292,23 +358,42 @@
     
     </section>
     
-    <!-- Fenêtre Modale -->
+    <!-- Fenêtre modale -->
     <div id="uploadModal" class="modal">
       <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
         <h3 id="modalTitle">Téléverser un fichier</h3>
         <p>Sélectionnez les classes concernées :</p>
-        <form id="uploadForm">
-          <label><input type="checkbox" name="classe" value="L1 Informatique"> SRIT2A</label><br>
-          <label><input type="checkbox" name="classe" value="L2 Informatique"> SRIT2B</label><br>
-    
-          <input type="file" id="fileInput" class="form-control mb-2" accept=".pdf,.xls,.xlsx">
+        <form id="uploadForm" method="POST" action="fichiers_etudiants.php" enctype="multipart/form-data">
+          <div class="col-md-4 form-group mt-3">
+            <label>Sélectionnez les classes :</label>
+            <!-- Affichage des classes -->
+            <?php if (!empty($data)) : ?>
+              <?php foreach ($data as $classe_id => $info) : ?>
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="classe_<?= $classe_id ?>" name="classes[]" value="<?= $classe_id ?>">
+                  <label class="form-check-label" for="classe_<?= $classe_id ?>">
+                      <?= htmlspecialchars($info['nom_classe']) ?>
+                  </label>
+                </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+          <div class="form-group mt-3">
+              <label for="fileType">Type de fichier :</label>
+              <select name="fileType" id="fileType" class="form-control">
+                  <option value="TD">TD</option>
+                  <option value="Cours">Cours</option>
+                  <option value="Exercice">Exercice</option>
+              </select>
+          </div>
+          <div class="mt-4"></div>
+          <input id="fileInput" type="file" name="file" class="form-control mb-2" accept=".pdf,.xls,.xlsx" required>
           <button type="submit" class="btn btn-primary">Envoyer</button>
         </form>
       </div>
+
     </div>
-    
-    
 
     <section id="appointment" class="appointment section light-background">
       <!-- Section Title -->
@@ -316,43 +401,48 @@
         <h2>PROGRAMMATION DE RATTRAPAGE</h2>
         <p>La fonctionnalité de prise de rendez-vous en ligne de Medicor vous permet de planifier vos consultations</p>
       </div><!-- End Section Title -->
-  
+
+      <!-- Formulaire HTML -->
       <div class="container" data-aos="fade-up" data-aos-delay="100">
-        <form method='POST' id="appointment-form" role="form">
+        <form method="POST" id="appointment-form" action="rattrapage.php" role="form">
           <div class="row">
             <div class="col-md-4 form-group mt-3">
-              <select name="department" id="department" class="form-select" required="">
+              <label for="doctor_day">Classe :</label>
+              <select name="department" id="department" class="form-select" required>
                 <option value="">Sélectionnez la classe</option>
-                <option value="SRIT2A">SRIT2A</option>
-                <option value="SRIT2B">SRIT2B</option>
+                <?php
+                // Afficher dynamiquement les classes enseignées par le professeur
+                foreach ($data as $classe_id => $classe_data) {
+                  // Afficher le nom de la classe, mais envoyer l'ID de la classe
+                  echo "<option value=\"$classe_id\">{$classe_data['nom_classe']}</option>";
+                }
+                ?>
               </select>
             </div>
             <div class="col-md-4 form-group mt-3">
-                <select name="doctor" id="doctor" class="form-select" required="">
-                    <option value="">Sélectionnez le jour</option>
-                    <option value="Dr. NOMEL">buyb</option>
-                    <option value="Dr.ABIALY">b67u7</option>
-                    <option value="Dr. ECHICOUA">b78j7</option>
-                </select>
+              <label for="doctor_day">Choisissez la date :</label>
+              <input type="date" name="doctor_day" class="form-control" required>
             </div>
             <div class="col-md-4 form-group mt-3">
-              <select name="doctor" id="doctor" class="form-select" required="">
-                  <option value="">Sélectionnez l'heure</option>
-                  <option value="Dr. NOMEL">07h45-10h00</option>
-                  <option value="Dr.ABIALY">10h15-12h45</option>
-              </select>
+              <label for="doctor_start_time">Heure de debut :</label>
+              <input type="time" name="doctor_start_time" class="form-control" required>
+            </div>
+            <div class="col-md-4 form-group mt-3">
+              <label for="doctor_end_time">Heure de fin :</label>
+                <input type="time" name="doctor_end_time" class="form-control" required>
+            </div>
           </div>
-          </div>
-
           <div class="mt-3">
             <div class="text-center">
-                <button type="submit" class="btn btn-success">VALIDER</button>
+              <button type="submit" class="btn btn-success">VALIDER</button>
             </div>
           </div>
         </form>
       </div>
 
-    </section>
+
+    </section> 
+
 
   </main>
 
@@ -368,7 +458,7 @@
       </div>
       <div class="container">
         <div class="copyright">
-          <span>Copyright</span> <strong class="px-1 sitename">Alex Smith</strong> <span>All Rights Reserved</span>
+          <span>Copyright</span> <strong class="px-1 sitename">Bureau Club Informatique de L'ESATIC</strong> <span>All Rights Reserved</span>
         </div>
         <div class="credits">
           Designed by <a href="https://bootstrapmade.com/">ESATIC</a>
@@ -399,73 +489,17 @@
   <script src="../assets/js/main.js"></script>
 
   <script>
-    // Récupérer les paramètres de l'URL
-    const params = new URLSearchParams(window.location.search);
-    const moyenne = params.get('moyenne');
-
-    // Afficher la moyenne si elle existe
-    if (moyenne) {
-      document.getElementById('moyenne').innerText = moyenne;
-    }
-  </script>
-
-  <!-- Script pour gérer l'upload -->
-  <script>
-    document.getElementById('uploadForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-      
-      let fileInput = document.getElementById('fileInput');
-      if (fileInput.files.length === 0) {
-        alert("Veuillez sélectionner un fichier samuel à téléverser.");
-        return;
-      }
-
-      let formData = new FormData();
-      formData.append("emploiDuTemps", fileInput.files[0]);
-
-      fetch('/upload_emploi_du_temps', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.text())
-      .then(data => alert("Fichier téléversé avec succès !"))
-      .catch(error => console.error("Erreur lors du téléversement :", error));
-    });
-  </script>
-
-  <!-- JavaScript pour gérer l'affichage de la fenêtre modale -->
-  <script>
-    function openModal(type) {
+    // Fonction pour ouvrir la modale et mettre à jour le titre
+    function openModal() {
       document.getElementById("uploadModal").style.display = "block";
-      document.getElementById("modalTitle").innerText = "Téléverser un " + (type === 'cours' ? "cours" : "TD");
+      changeModalTitle(); // Met à jour le titre dès l'ouverture de la modale
     }
-  
+
+    // Fonction pour fermer la modale
     function closeModal() {
       document.getElementById("uploadModal").style.display = "none";
     }
-  
-    document.getElementById("uploadForm").addEventListener("submit", function(event) {
-      event.preventDefault();
-  
-      let fileInput = document.getElementById("fileInput");
-      let selectedClasses = Array.from(document.querySelectorAll('input[name="classe"]:checked'))
-        .map(cb => cb.value);
-  
-      if (selectedClasses.length === 0) {
-        alert("Veuillez sélectionner au moins une classe !");
-        return;
-      }
-  
-      if (fileInput.files.length === 0) {
-        alert("Veuillez sélectionner un fichier !");
-        return;
-      }
-  
-      alert("Fichier envoyé avec succès pour les classes : " + selectedClasses.join(", "));
-      closeModal();
-    });
   </script>
-
 </body>
 
-</html>
+</html

@@ -1,32 +1,17 @@
 <?php
-session_start();
-include('../dbconnection.php'); // Connexion à la base de données
+require '../dbconnection.php'; // Inclure le fichier de connexion
 
-if (isset($_SESSION['admin_email'])) {
-    $email = $_SESSION['admin_email'];
+// ID de l'étudiant à afficher (exemple: 1)
+$id_etudiant = 1;
 
-    // Vérification si la session existe
-    $sql = "SELECT nom_admin FROM administration WHERE admin_email = :email";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(':email', $email);
-    $stmt->execute();
-    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($admin && !empty($admin['nom_admin'])) {
-        $nom_admin = htmlspecialchars($admin['nom_admin']); // Sécurisation
-    } else {
-        $nom_admin = "Admin"; // Si aucun nom n'est trouvé
-    }
-} else {
-    echo "<script>alert('Veuillez vous connecter d'abord'); window.location.href='../connexion.php';</script>";
-    exit();
-}
+// Requête SQL pour récupérer le nom de l'étudiant
+$stmt = $pdo->prepare("SELECT nom_etudiant FROM etudiants WHERE id = ?");
+$stmt->execute([$id_etudiant]);
+$etudiant = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
-
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
   <meta charset="utf-8">
@@ -44,7 +29,7 @@ if (isset($_SESSION['admin_email'])) {
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
-  <!-- Vendor CSS Files -->
+  <!-- Vendor CSS Files  iyee -->
   <link href="../assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link href="../assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
   <link href="../assets/vendor/aos/aos.css" rel="stylesheet">
@@ -76,7 +61,7 @@ if (isset($_SESSION['admin_email'])) {
         margin: auto;
     }
     /* Section d'image en haut */
-  .top-image-container {
+    .top-image-container {
     width: 100%;
     height: 100vh; /* Utilise toute la hauteur de la fenêtre */
     position: relative;
@@ -85,21 +70,21 @@ if (isset($_SESSION['admin_email'])) {
     align-items: center;
     overflow: hidden;
     z-index: 10;
-  }
+    }
 
-  /* Image */
-  .top-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* L'image va remplir l'espace sans déformer */
-  }
+    /* Image */
+    .top-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* L'image va remplir l'espace sans déformer */
+    }
 
-  /* Contenu sous l'image */
-  .content {
-    position: relative;
-    z-index: 1;
-    padding: 20px;
-  }
+    /* Contenu sous l'image */
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 20px;
+    }
 
   </style>
 
@@ -177,8 +162,8 @@ if (isset($_SESSION['admin_email'])) {
     <nav id="navmenu" class="navmenu">
       <ul>
         <li><a href="#hero" class="active"><i class="bi bi-house-door navicon"></i><span>Tableau de bord</span></a></li>
-        <li><a href="#about"><i class="bi bi-book navicon"></i><span>Gestion Professeurs</span></a></li>
-        <li><a href="#resume"><i class="bi bi-book navicon"></i><span>Gestion Etudiants</span></a></li>
+        <li><a href="#about"><i class="bi bi-book navicon"></i><span>Mes documents</span></a></li>
+        <li><a href="#resume"><i class="bi bi-book navicon"></i><span>Mes notes</span></a></li>
         <li><a href="#appointment"><i class="bi bi-pencil-square navicon"></i><span>Résultats</span></a></li>
         <li><a href="#"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
       </ul>
@@ -190,9 +175,9 @@ if (isset($_SESSION['admin_email'])) {
     <div class="content" id="hero">
       <div class="container mt-4">
         <header class="mb-4">
-        <h1 class="text-center">Bienvenue, <?php echo htmlspecialchars($nom_admin ?? "Admin"); ?></h1>
-
-
+        <h1 class="text-center">
+        Bienvenue, <?php echo $etudiant ? htmlspecialchars($etudiant['nom_etudiant']) : "Professeur Goli"; ?>
+    </h1>
         </header>
     
         <!-- Widgets -->
@@ -304,19 +289,81 @@ if (isset($_SESSION['admin_email'])) {
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>GESTION DES PROFESSEURS</h2>
-        <p>Ici, vous gérez les professeurs.</p>
+        <h2>MES DOCUMENTS</h2>
+        <p>Récupère ici tous tes documents selon la matière.</p>
       </div>
     
-      <div class="d-flex justify-content-center mt-4">
-    <button class="btn btn-primary mx-2" onclick="window.location.href='ajoutprof.php'">Ajouter un professeur</button>
-    <button class="btn btn-primary mx-2" onclick="window.location.href='modifprof.php'">Modifier un professeur</button>
-    <button class="btn btn-primary mx-2">Supprimer un professeur</button>
-    <button class="btn btn-primary mx-2" onclick="window.location.href='uploadprogram_prof.php'">Uploader fichier du professeur</button>
-    <button class="btn btn-primary mx-2">Voir les professeurs</button>
-</div>
-
-      
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+        <div class="row gy-4 justify-content-center">
+    
+          <!-- Liste des cours -->
+          <div class="col-lg-10">
+            <h3>Liste des classes</h3>
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Classe</th>
+                  <th>Code</th>
+                  <th>Intitulé</th>
+                  <th>Horaires</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SRIT2A</td>
+                  <td>INF101</td>
+                  <td>Introduction à l'informatique</td>
+                  <td>Lundi 8h - 10h</td>
+                  <td>
+                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
+                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
+                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
+                    <button class="btn btn-success">Liste de classe</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>SRIT2B</td>
+                  <td>MAT201</td>
+                  <td>Mathématiques avancées</td>
+                  <td>Mercredi 14h - 16h</td>
+                  <td>
+                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
+                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
+                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
+                    <button class="btn btn-success">Liste de classe</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>RTEL2</td>
+                  <td>MAT201</td>
+                  <td>Mathématiques avancées</td>
+                  <td>Mercredi 14h - 16h</td>
+                  <td>
+                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
+                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
+                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
+                    <button class="btn btn-success">Liste de classe</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>SIGL2</td>
+                  <td>MAT201</td>
+                  <td>Mathématiques avancées</td>
+                  <td>Mercredi 14h - 16h</td>
+                  <td>
+                    <button class="btn btn-success" onclick="openModal('cours')">Ajouter cours</button>
+                    <button class="btn btn-warning" onclick="openModal('td')">Ajouter TD</button>
+                    <a href="note.html" class="btn btn-danger">Saisir Notes</a>
+                    <button class="btn btn-success">Liste de classe</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+    
+        </div>
+      </div>
     
     </section>
 
@@ -324,17 +371,57 @@ if (isset($_SESSION['admin_email'])) {
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>GESTION DES ETUDIANTS</h2>
-        <p>Gérez tous les détails sur les étudiants de l'ESATIC.</p>
+        <h2>Gestion des notes</h2>
+        <p>Renseignez vos notes et calculer votre moyenne</p>
       </div><!-- End Section Title -->
     
-      <div class="d-flex justify-content-center mt-4">
-        <button class="btn btn-primary mx-2" onclick="window.location.href='addetudiant.php'">Ajouter un étudiant</button>
-        <button class="btn btn-primary mx-2">Modifier un étudiant</button>
-        <button class="btn btn-primary mx-2">Supprimer un étudiant</button>
-        <button class="btn btn-primary mx-2" onclick="window.location.href='uploadprogram.php'">Uploader l'emploi du temps</button>
-        <button class="btn btn-primary mx-2">Voir les étudiants</button>
-      </div>
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+    
+        <div class="row gy-4 justify-content-center">
+          
+          <div class="col-lg-15 content">
+            <h2>Gestion des notes</h2>
+
+            <div class="mb-3">
+              <label for="subjectSelect" class="form-label">Sélectionner une matière</label>
+              <select id="subjectSelect" class="form-control">
+                <option value="Mathématiques">Algo</option>
+                <option value="Physique">Physique</option>
+                <option value="Chimie">Python</option>
+                <option value="Informatique">Geo-diff</option>
+              </select>
+          </div>
+
+          
+            
+            <table style="width: 100%" id="notesTable" class="table table-bordered">
+              <thead>
+                <tr>
+                    <th style="width: 10%">Nom</th>
+                    <th style="width: 10%">Note </th>
+                    
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td rowspan="1000">Dagou</td>
+                  <td><input type="number" class="form-control note"></td>
+                </tr>
+              </tbody>
+            </table>
+            <button class="btn btn-primary add-row-btn">Ajouter une note</button>
+            <button class="btn btn-success calculate-btn">Calculer la Moyenne</button>
+            <h3 class="mt-4">Moyenne générale: <span id="average">-</span></h3>
+          </div>
+          <table id="subjectAverageTable" class="subject-average-table">
+            <thead>
+              <tr>
+                <th>Matière</th>
+                <th>Moyenne</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         
           <script>
        
@@ -405,8 +492,7 @@ if (isset($_SESSION['admin_email'])) {
         </div>
     
       </div>
-    
-    </section>
+    </section>
 
     
     
@@ -434,7 +520,7 @@ if (isset($_SESSION['admin_email'])) {
         <h2>RESULTATS SEMESTRIELS</h2>
         <p><strong>Vos résultats du semestre ne sont pas disponibles actuellement...</strong></p>
       </div><!-- End Section Title -->
-</section>
+    </section>
 
 
   </main>
