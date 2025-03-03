@@ -9,7 +9,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
     // Connexion à la base de données
     try {
-        $pdo = new PDO('pgsql:host=localhost;dbname=site_esatic', 'samuel', 'cedric225');
+        $pdo = new PDO('pgsql:host=localhost;dbname=site_esatic', 'postgres', 'admin');
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         
         // Récupération des informations du fichier

@@ -11,8 +11,8 @@ $professeur_id = $_SESSION['user_id']; // ID du professeur depuis la session
 // Connexion à la base de données
 $host = 'localhost';
 $dbname = 'site_esatic';
-$user = 'samuel';
-$password = 'cedric225';
+$user = 'postgres';
+$password = 'admin';
 
 try {
     $conn = new PDO("pgsql:host=$host;dbname=$dbname", $user, $password);

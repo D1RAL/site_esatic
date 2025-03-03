@@ -3,8 +3,8 @@ session_start(); // Toujours mettre ça en haut
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $dsn = "pgsql:host=localhost;dbname=site_esatic";
-    $username = "samuel";
-    $password_db = "cedric225";
+    $username = "postgres";
+    $password_db = "admin";
 
     try {
         $connexion = new PDO($dsn, $username, $password_db);

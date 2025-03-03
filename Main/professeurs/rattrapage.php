@@ -1,4 +1,4 @@
-<?php
+**<?php
 session_start();
 require '../dbconnection.php'; // Fichier de connexion à la base de données
 
@@ -11,10 +11,10 @@ $professeur_id = $_SESSION['user_id'];
 
 // Récupérer les données du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $classe_id = $_POST['department']; // Utiliser directement l'ID de la classe
-    $jour = $_POST['doctor_day']; 
-    $heure_debut = $_POST['doctor_start_time']; 
-    $heure_fin = $_POST['doctor_end_time']; 
+    $classe_id = $_POST['classe_id']; // Utiliser directement l'ID de la classe
+    $jour = $_POST['jour']; 
+    $heure_debut = $_POST['heure_debut']; 
+    $heure_fin = $_POST['heure_fin']; 
 
     // Vérifier si les champs sont remplis
     if (!empty($classe_id) && !empty($jour) && !empty($heure_debut) && !empty($heure_fin)) {

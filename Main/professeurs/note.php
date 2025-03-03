@@ -3,7 +3,7 @@
 session_start();
 
 // Connexion à la base de données
-$pdo = new PDO('pgsql:host=localhost;dbname=site_esatic', 'samuel', 'cedric225');
+$pdo = new PDO('pgsql:host=localhost;dbname=site_esatic', 'postgres', 'admin');
 
 // Vérifier si les paramètres sont dans l'URL ou dans la session
 $classe_id = isset($_GET['classe_id']) ? $_GET['classe_id'] : (isset($_SESSION['classe_id']) ? $_SESSION['classe_id'] : null);

@@ -2,7 +2,7 @@
 session_start();
 
 // Connexion à la base de données
-$pdo = new PDO('pgsql:host=localhost;dbname=site_esatic', 'samuel', 'cedric225');
+$pdo = new PDO('pgsql:host=localhost;dbname=site_esatic', 'postgres', 'admin');
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // Pour activer les exceptions PDO
 
 if (!isset($_SESSION['user_id'])) {

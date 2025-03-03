@@ -6,8 +6,8 @@ if (session_status() == PHP_SESSION_NONE) {
 // Informations de connexion
 $host = "localhost";  
 $dbname = "site_esatic";  
-$username = "samuel";  
-$password = "cedric225";  
+$username = "postgres";  
+$password = "admin";  
 $port = "5432"; 
 
 try {
