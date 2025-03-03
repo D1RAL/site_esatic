@@ -205,7 +205,7 @@ $files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
         <li><a href="#hero" class="active"><i class="bi bi-house-door navicon"></i><span>Tableau de bord</span></a></li>
         <li><a href="#about"><i class="bi bi-book navicon"></i><span>Mes classes</span></a></li>
         <li><a href="#appointment"><i class="bi bi-pencil-square navicon"></i><span>Rattrapage</span></a></li>
-        <li><a href="#"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
+        <li><a href="logout.php"><i class="bi bi-calendar navicon"></i><span>Deconnexion</span></a></li>
       </ul>
     </nav>
 
@@ -236,35 +236,30 @@ $files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
             <h3 class="text-center">Progression des cours donnés</h3>
             <canvas id="statsChart"></canvas>
         </div>
-    
+
         <!-- Derniers fichiers téléversés -->
         <div class="mt-4">
-            <h3>Derniers fichiers téléversés</h3>
+            <h3>Fichiers recus</h3>
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Nom du fichier</th>
-                        <th>Classe</th>
-                        <th>Type</th>
-                        <th>Date</th>
-                        <th>Téléchargement</th>
+                      <th>Nom du fichier</th>
+                      <th>Expediteur</th>
+                      <th>Date</th>
+                      <th>Téléchargement</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>cours_informatique.pdf</td>
-                        <td>SRIT2A</td>
-                        <td>Cours</td>
-                        <td>16/02/2025</td>
-                        <td><button class="btn btn-sm btn-primary">📥 Télécharger</button></td>
-                    </tr>
-                    <tr>
-                        <td>TD_math.xlsx</td>
-                        <td>SRIT2B</td>
-                        <td>TD</td>
-                        <td>15/02/2025</td>
-                        <td><button class="btn btn-sm btn-primary">📥 Télécharger</button></td>
-                    </tr>
+                  <?php if (!empty($files)) : ?>
+                    <?php foreach ($files as $file) : ?>
+                      <tr>
+                        <td><?= htmlspecialchars($file['fichier_pdf']) ?></td>
+                        <td>Administration</td> 
+                        <td><?= htmlspecialchars($file['date_telechargement']) ?></td>
+                        <td><a href="telecharger_fichier.php?file=<?= urlencode($file['fichier_pdf']) ?>" class="btn btn-sm btn-primary">📥 Télécharger</a></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -348,7 +343,7 @@ $files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
                       <?php foreach ($info['matieres'] as $matiere) : ?>
                         <a href="note.php?classe_id=<?= $classe_id ?>&matiere_id=<?= $matiere['id'] ?>" class="btn btn-danger">Saisir Notes</a>
                       <?php endforeach; ?>
-                      <button class="btn btn-warning">Liste de classe</button>
+                      <a href="liste_etudiants.php?classe_id=<?= $classe_id ?>" class="btn btn-warning">Liste de classe</a>
                     </div>
                   </div>
                 </div>
@@ -412,6 +407,7 @@ $files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
         <form method="POST" id="appointment-form" action="rattrapage.php" role="form">
           <div class="row">
             <div class="col-md-4 form-group mt-3">
+              <label for="doctor_day">Classe :</label>
               <select name="department" id="department" class="form-select" required>
                 <option value="">Sélectionnez la classe</option>
                 <?php
@@ -424,12 +420,15 @@ $files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
               </select>
             </div>
             <div class="col-md-4 form-group mt-3">
-                <input type="date" name="doctor_day" class="form-control" required>
+              <label for="doctor_day">Choisissez la date :</label>
+              <input type="date" name="doctor_day" class="form-control" required>
             </div>
             <div class="col-md-4 form-group mt-3">
-                <input type="time" name="doctor_start_time" class="form-control" required>
+              <label for="doctor_start_time">Heure de debut :</label>
+              <input type="time" name="doctor_start_time" class="form-control" required>
             </div>
             <div class="col-md-4 form-group mt-3">
+              <label for="doctor_end_time">Heure de fin :</label>
                 <input type="time" name="doctor_end_time" class="form-control" required>
             </div>
           </div>
@@ -445,20 +444,6 @@ $files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
     </section> 
 
 
-    <h3>Vos fichiers uploadés :</h3>
-    <?php if (!empty($files)) : ?>
-        <ul>
-            <?php foreach ($files as $file) : ?>
-                <li>
-                    <a href="telecharger_fichier.php?file=<?= urlencode($file['fichier_pdf']) ?>">
-                        <?= htmlspecialchars($file['fichier_pdf']) ?>
-                    </a> - Date : <?= htmlspecialchars($file['date_telechargement']) ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php else : ?>
-        <p>Aucun fichier trouvé.</p>
-    <?php endif; ?>
   </main>
 
   <footer id="footer" class="footer position-relative light-background">
@@ -473,7 +458,7 @@ $files = $stmt_files->fetchAll(PDO::FETCH_ASSOC);
       </div>
       <div class="container">
         <div class="copyright">
-          <span>Copyright</span> <strong class="px-1 sitename">Alex Smith</strong> <span>All Rights Reserved</span>
+          <span>Copyright</span> <strong class="px-1 sitename">Bureau Club Informatique de L'ESATIC</strong> <span>All Rights Reserved</span>
         </div>
         <div class="credits">
           Designed by <a href="https://bootstrapmade.com/">ESATIC</a>
